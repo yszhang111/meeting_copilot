@@ -54,9 +54,13 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                <Button Style="{StaticResource AccentButtonStyle}" Command="{x:Bind ViewModel.NewSessionCommand}" IsEnabled="{x:Bind ViewModel.CanStart, Mode=OneWay}"
-                        Visibility="{x:Bind ViewModel.StartVisibility, Mode=OneWay}" AutomationProperties.Name="New session" ToolTipService.ToolTip="Check your microphone and speakers, then start a new session">
-                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE710;" FontSize="14" /><TextBlock Text="New session" /></StackPanel>
+                <Button Command="{x:Bind ViewModel.GoHomeCommand}" IsEnabled="{x:Bind ViewModel.CanGoHome, Mode=OneWay}"
+                        AutomationProperties.Name="Back to Home" ToolTipService.ToolTip="Back to Home (stop the session first)">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE80F;" FontSize="14" /><TextBlock Text="Home" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource AccentButtonStyle}" Command="{x:Bind ViewModel.StartCommand}" IsEnabled="{x:Bind ViewModel.CanStart, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.StartVisibility, Mode=OneWay}" AutomationProperties.Name="Start listening" ToolTipService.ToolTip="Start listening">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE768;" FontSize="14" /><TextBlock Text="Start" /></StackPanel>
                 </Button>
                 <Button Style="{StaticResource AccentButtonStyle}" Command="{x:Bind ViewModel.ResumeCommand}"
                         Visibility="{x:Bind ViewModel.ResumeVisibility, Mode=OneWay}" AutomationProperties.Name="Resume listening">

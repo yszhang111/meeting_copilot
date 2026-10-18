@@ -19,7 +19,6 @@ public sealed partial class LiveSessionView : UserControl
         ViewModel.SegmentsAppended += OnSegmentsAppended;
         ViewModel.EvidenceRequested += OnEvidenceRequested;
         ViewModel.FocusedCardReplaced += () => FocusedAnswer.ScrollToTop();
-        ViewModel.ConfirmDisclosure = ConfirmDisclosureAsync;
         TranscriptList.Loaded += (_, _) => AttachScroller();
     }
 
@@ -227,35 +226,6 @@ public sealed partial class LiveSessionView : UserControl
     }
 
     public void ShowPreparation() => PanelSelector.SelectedItem = PrepTab;
-
-    // ------------------------------------------------------------------ disclosure
-
-    private async Task<bool> ConfirmDisclosureAsync()
-    {
-        var dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot ?? App.Current?.MainXamlRoot,
-            Title = "Start listening?",
-            Content = new ScrollViewer
-            {
-                Content = new TextBlock
-                {
-                    TextWrapping = TextWrapping.Wrap,
-                    Text =
-                        "• System audio: everything playing on the selected output device (including other apps) is streamed to OpenAI for live transcription.\n" +
-                        "• Microphone: if it is on (the default), it is streamed the same way.\n" +
-                        "• Speaker labels: short audio windows (about 20 s) and a few temporary voice snippets are kept in memory and uploaded to OpenAI to tell speakers apart. They are deleted when you stop, reset or exit.\n" +
-                        "• Answers: recent transcript text, earlier questions of this session with your replies, relevant preparation notes and (interview mode) your selected résumé are sent to the configured OpenAI model.\n" +
-                        "• Audio is never saved. The transcript text and answers are saved to History on this PC, encrypted for your Windows account (Settings > Session history to turn off or delete). Cloud processing is governed by your OpenAI account's data policies.\n\n" +
-                        "Make sure you have consent from the other participants and follow your organization's rules.",
-                },
-            },
-            PrimaryButtonText = "Start",
-            CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary,
-        };
-        return await dialog.ShowAsync() == ContentDialogResult.Primary;
-    }
 
     private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
     {

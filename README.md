@@ -1,6 +1,6 @@
 # Proactive AI — native Windows meeting, interview and defense assistant
 
-Proactive AI is a WinUI 3 desktop app for Windows 11 x64. When you explicitly start listening, it:
+Proactive AI is a WinUI 3 desktop app for Windows 10 (2004 or later) and Windows 11, x64. When you explicitly start listening, it:
 
 - captures **one playback device** (WASAPI loopback) and, if you switch it on, **one microphone**;
 - streams speech to OpenAI for **live captions** (`gpt-live-transcribe`, Realtime WebSocket);
@@ -15,9 +15,10 @@ Nothing is recorded to disk. See *Privacy* below.
 
 | What | Version / note |
 | --- | --- |
-| OS | Windows 11 x64 (developed on build 26200; minimum supported 22621 for echo-cancellation reference control) |
+| OS | Windows 10 version 2004 (build 19041) or later, or Windows 11; x64. Developed and tested on Windows 11 build 26200; **Windows 10 not yet tested on a real machine**. On Windows 10 the window background is solid instead of Mica, and the optional *Windows communications processing* echo mode cannot set the echo reference (needs Windows 11 22H2); the default built-in echo canceller works on both |
 | To build | .NET SDK **10.0.402** (`winget install --id Microsoft.DotNet.SDK.10 -e`). Visual Studio is optional. |
-| To run the zip | Nothing else: the zip is self-contained (.NET runtime and Windows App SDK included). |
+| To run the zip / installer | Nothing else: both are self-contained (.NET runtime and Windows App SDK included). |
+| To build the installer | Inno Setup 6 (`winget install --id JRSoftware.InnoSetup -e`; verified with 6.7.3). Optional — without it only the zip is built. |
 | Account | An OpenAI API key with access to the models listed in Settings. |
 
 ## Build, test, run
@@ -35,14 +36,17 @@ Store your key (masked prompt, written to Windows Credential Manager — never t
 powershell -ExecutionPolicy Bypass -File tools\Set-ApiKey.ps1      # or Settings > OpenAI API key
 ```
 
-### Distribution (unpackaged, self-contained zip)
+### Distribution (installer and self-contained zip)
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\Publish.ps1
-# -> artifacts\ProactiveAI-0.1.0-win-x64.zip  (extract anywhere, run ProactiveAI.exe)
+powershell -ExecutionPolicy Bypass -File tools\Publish.ps1      # -NoInstaller: zip only
+# -> artifacts\ProactiveAI-<version>-win-x64-setup.exe  (installer, ~65 MB)
+# -> artifacts\ProactiveAI-<version>-win-x64.zip        (extract anywhere, run ProactiveAI.exe)
 ```
 
-The zip is **not code-signed**. Windows SmartScreen may warn on first launch of a downloaded copy; no certificate, MSIX, Developer Mode or trust change is needed or performed. To distribute widely, sign `ProactiveAI.exe` with your own code-signing certificate.
+The version comes from `Directory.Build.props`. The installer (`tools\installer\ProactiveAI.iss`) installs for the current user by default without an administrator prompt (all users can be chosen), into `%LOCALAPPDATA%\Programs\Proactive AI`, with a Start menu shortcut, an optional desktop shortcut and an entry in *Installed apps*. Installing a newer version over an older one upgrades in place. Setup and uninstall ask the user to close Proactive AI first if it is running. On uninstall the user is asked whether to also delete the app's data (saved sessions, résumés, settings, logs in `%LOCALAPPDATA%\ProactiveAI` and the API key in Credential Manager); the default — and the answer in silent uninstalls — is to keep it. Silent install: `setup.exe /VERYSILENT [/CURRENTUSER|/ALLUSERS] [/DIR=...]`.
+
+Neither the installer nor the zip is **code-signed**. Windows SmartScreen may warn on first launch of a downloaded copy ("More info → Run anyway"); no certificate, MSIX, Developer Mode or trust change is needed or performed. To distribute widely, sign `setup.exe` and `ProactiveAI.exe` with your own code-signing certificate. Each user needs their own OpenAI API key; the package contains no key, settings or history.
 
 ### Verification tool (opt-in, uses your API key)
 
@@ -63,9 +67,9 @@ dotnet build tools\ProactiveAI.Probe
 
 1. The app opens on **Home**: start a **New session**, or open a previous session to read its transcript and answers (Copy all / Delete).
 2. **New session** shows a device check: pick **Meeting / Interview / Defense**, toggle **System audio** and/or **Microphone** (the microphone is on by default; your last choice is remembered), speak to see the microphone level, and select **Play test sound** to confirm the speakers are captured (it also tells you whether the microphone hears the speakers, i.e. you are on loudspeakers). The check is optional. With loudspeakers, keep system audio on: the built-in echo canceller (**Settings > Echo cancellation**, default) uses it to remove the playback from your microphone. It learns the echo path during the first seconds of playback; the status strip shows how much echo it currently removes. Headphones avoid echo entirely. In **Interview** mode, choose the **résumé** for this interview (or upload one: PDF or Word .docx, also by dropping the file on that section). You can keep several versions; the last choice is pre-selected and can be changed here or on the live page under **Preparation**, where **Extracted text** shows exactly what the AI reads. Scanned PDFs without a text layer and old .doc files are not supported. Optionally fill **Preparation** notes on the live page (role/topic, your contribution, method, verified results, limitations, terminology).
-3. Select **Start** and confirm the disclosure. Captions appear with speaker labels (pending at first, revised in place within ~10–25 s).
+3. Select **Continue**. The session page opens without listening; select **Start** there to begin (the *Cloud processing* note on that page says what is sent to OpenAI). Captions appear with speaker labels (pending at first, revised in place within ~10–25 s). While a session runs, the page's **Home** button is disabled; leaving through the side bar asks whether to stop the session first.
 4. When a question is asked, the **Assistant** panel and overlay stream a draft answer. Answers about your own projects and research are written so you can say them as they are. Details you never mentioned (for example how something was measured, tools, steps, reasons) are filled in with typical practice and listed under **AI filled in — check before saying**. Measured results (scores, percentages, latency, counts), employers, job titles, degrees, publications and citations are never made up; when an answer needs one, it appears under **Facts that must not be made up — add them yourself**. Clear questions are recognized locally and instantly — usually already from the live caption, before it is finalized; turns the local rules are unsure about are checked by a small AI model first (about 1 s; **Settings > AI question detection**). **Settings > Fast mode for answers** (off by default) uses OpenAI Fast mode for answer requests: the first lines appear roughly 0.3–1 s sooner at about twice the price of those requests. Pin it while reading; a "newer answer" banner appears instead of replacing what you read. Copy, dismiss, cancel or regenerate as needed. Select transcript lines and **Answer this question** if detection missed one.
-5. Rename speakers or correct a line's speaker from its label. Pause / Resume / Stop / Reset; Reset clears the session but keeps preparation notes (they have their own Clear button). The session is saved to **History** on stop (and every 30 s while it runs), so starting a new session never loses the previous one.
+5. Rename speakers or correct a line's speaker from its label. Pause / Resume / Stop / Reset; Reset clears the session but keeps preparation notes (they have their own Clear button). The session is saved to **History** on stop (and every 30 s while it runs). After **Stop**, select **Home** to start the next session (Start is used once per session page) or to read past sessions.
 
 Closing the main window stops and exits unless **Settings > Closing the main window** keeps it in the tray.
 
@@ -89,10 +93,7 @@ src/ProactiveAI.Infrastructure  Windows/OpenAI adapters: NAudio WASAPI capture, 
                                 Responses SSE, Credential Manager, settings, tokenizer, bounded log
 src/ProactiveAI.Desktop         WinUI 3 app: main window, overlay, tray, view models
 tests/ProactiveAI.Tests         xUnit v3 tests with fakes and fixtures
-tools/                          Set-ApiKey.ps1, Publish.ps1, Make-AppIcon.ps1, ProactiveAI.Probe (live verification)
+tools/                          Set-ApiKey.ps1, Publish.ps1, Make-AppIcon.ps1, installer/ProactiveAI.iss (Inno Setup), ProactiveAI.Probe (live verification)
 docs/                           COMPATIBILITY.md, ARCHITECTURE.md, PROGRESS.md, MANUAL_VALIDATION.md
 ```
 
-## Known limitations
-
-See `docs/PROGRESS.md` (verification status) and `docs/ARCHITECTURE.md` (design limits). Deferred by design: multiple endpoints per source, per-process capture, persistent history/recordings, cross-session voice profiles, document ingestion, web research, spoken output, global shortcuts, click-through overlays, advanced multi-monitor layouts.

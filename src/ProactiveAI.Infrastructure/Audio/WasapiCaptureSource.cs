@@ -10,13 +10,16 @@ namespace ProactiveAI.Infrastructure.Audio;
 /// <summary>
 /// WASAPI capture of one endpoint via NAudio's <see cref="WasapiRecorder"/>. System playback uses
 /// loopback capture; microphones optionally use the Windows communications pipeline with the selected
-/// playback endpoint as the acoustic echo cancellation reference (Windows 11 22621+, endpoint-dependent).
+/// playback endpoint as the acoustic echo cancellation reference (Windows 11 22621+, endpoint-dependent;
+/// skipped on older Windows, which falls back to communications-only or plain capture).
 /// </summary>
 internal sealed class WasapiCaptureSource : ICaptureSource
 {
     private const int AudclntEDeviceInvalidated = unchecked((int)0x88890004);
     private const int AudclntEServiceNotRunning = unchecked((int)0x88890010);
     private const int EAccessDenied = unchecked((int)0x80070005);
+
+    private static readonly bool AecReferenceSupported = OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621);
 
     private readonly CaptureRequest _request;
     private readonly ILogger _log;
@@ -62,7 +65,7 @@ internal sealed class WasapiCaptureSource : ICaptureSource
         }
         else
         {
-            if (_request.UseCommunicationsProcessing && _request.EchoReferenceRenderDeviceId is { } refId)
+            if (_request.UseCommunicationsProcessing && AecReferenceSupported && _request.EchoReferenceRenderDeviceId is { } refId)
             {
                 try
                 {
@@ -123,7 +126,9 @@ internal sealed class WasapiCaptureSource : ICaptureSource
                     echoDetail = attempt.Status switch
                     {
                         EchoControlStatus.ReferenceEndpointSet => "Windows AEC active with the selected playback device as reference",
-                        EchoControlStatus.CommunicationsModeOnly => "Communications processing requested; AEC reference control not available on this endpoint",
+                        EchoControlStatus.CommunicationsModeOnly => AecReferenceSupported
+                            ? "Communications processing requested; AEC reference control not available on this endpoint"
+                            : "Communications processing requested; AEC reference control needs Windows 11 22H2 or later",
                         EchoControlStatus.Unavailable when _request.UseCommunicationsProcessing => "No echo cancellation available on this microphone; use headphones",
                         EchoControlStatus.Unavailable => "Echo cancellation disabled",
                         _ => null,

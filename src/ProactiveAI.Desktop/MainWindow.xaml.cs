@@ -48,6 +48,7 @@ public sealed partial class MainWindow : Window
 
     private readonly AppNavigator _nav;
     private SessionState _lastState;
+    private bool _leavePromptOpen;
 
     public IntPtr Hwnd { get; }
 
@@ -74,21 +75,72 @@ public sealed partial class MainWindow : Window
     // ItemInvoked (not SelectionChanged): Home stays highlighted on the pages reached from it, and clicking it must still go Home.
     private void Nav_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
-        if (args.IsSettingsInvoked)
+        AppPage? target = args.IsSettingsInvoked ? AppPage.Settings
+            : args.InvokedItemContainer is NavigationViewItem { Tag: "home" } ? AppPage.Home
+            : null;
+        if (target is not { } page)
         {
-            _nav.Navigate(AppPage.Settings);
+            return;
         }
-        else if (args.InvokedItemContainer is NavigationViewItem { Tag: "home" })
+        if (_nav.Current == AppPage.Live && LiveView.ViewModel.IsSessionInProgress)
         {
-            _nav.Navigate(AppPage.Home);
+            _ = ConfirmLeaveSessionAsync(page);
+            return;
+        }
+        _nav.Navigate(page);
+    }
+
+    /// <summary>Leaving the session page while a session is in progress asks to stop it first.</summary>
+    private async Task ConfirmLeaveSessionAsync(AppPage target)
+    {
+        if (_leavePromptOpen)
+        {
+            return;
+        }
+        _leavePromptOpen = true;
+        try
+        {
+            string where = target == AppPage.Settings ? "open Settings" : "go back to Home";
+            var dialog = new ContentDialog
+            {
+                XamlRoot = Content.XamlRoot,
+                Title = "Stop the session?",
+                Content = new TextBlock
+                {
+                    TextWrapping = TextWrapping.Wrap,
+                    Text = $"A session is in progress. Stop listening and {where}? What was said so far is saved to History (if session history is on).",
+                },
+                PrimaryButtonText = target == AppPage.Settings ? "Stop and open Settings" : "Stop and go Home",
+                CloseButtonText = "Keep listening",
+                DefaultButton = ContentDialogButton.Close,
+            };
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                await LiveView.ViewModel.StopCommand.ExecuteAsync(null);
+                _nav.Navigate(target);
+            }
+            else
+            {
+                SyncNavSelection(_nav.Current);
+            }
+        }
+        finally
+        {
+            _leavePromptOpen = false;
         }
     }
+
+    private void SyncNavSelection(AppPage page) => Nav.SelectedItem = page == AppPage.Settings ? Nav.SettingsItem : HomeItem;
 
     private void OnNavigated(AppPage previous, AppPage page)
     {
         if (previous == AppPage.Setup)
         {
             SetupPage.ViewModel.Deactivate();
+        }
+        if (previous == AppPage.Live && page != AppPage.Live)
+        {
+            LiveView.ViewModel.AwaitingStart = false; // a session page left before Start is not started later
         }
         HomePage.Visibility = Vis(page == AppPage.Home);
         SetupPage.Visibility = Vis(page == AppPage.Setup);
@@ -107,7 +159,7 @@ public sealed partial class MainWindow : Window
                 SettingsPage.ViewModel.RefreshDevices();
                 break;
         }
-        Nav.SelectedItem = page == AppPage.Settings ? Nav.SettingsItem : HomeItem;
+        SyncNavSelection(page);
     }
 
     private void OnLivePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

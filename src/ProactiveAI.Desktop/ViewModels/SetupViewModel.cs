@@ -66,8 +66,8 @@ public sealed partial class SetupViewModel : ObservableObject
         : !_live.SystemEnabled && !_live.MicrophoneEnabled
             ? "Turn on system audio and/or the microphone."
             : (!_live.MicrophoneEnabled || MicOk) && (!_live.SystemEnabled || SpeakerOk)
-                ? "Devices checked. Ready to start."
-                : "You can start without the checks, but testing first avoids surprises.";
+                ? "Devices checked. Continue, then select Start on the session page to begin listening."
+                : "You can continue without the checks, but testing first avoids surprises. Listening begins when you select Start on the next page.";
 
     partial void OnEchoHintChanged(string? value) => OnPropertyChanged(nameof(EchoHintVisibility));
 
@@ -155,8 +155,9 @@ public sealed partial class SetupViewModel : ObservableObject
         }
     }
 
+    /// <summary>Opens the session page ready to start; listening begins only when the user selects Start there.</summary>
     [RelayCommand]
-    private async Task StartAsync()
+    private async Task ContinueAsync()
     {
         if (IsStarting)
         {
@@ -168,19 +169,7 @@ public sealed partial class SetupViewModel : ObservableObject
             _testCts?.Cancel();
             Interlocked.Increment(ref _restartVersion);
             await RunCheckAsync(_check.StopAsync); // release the devices before the session opens them
-            await _live.StartCommand.ExecuteAsync(null);
-            if (_live.State is SessionState.Stopped or SessionState.Error)
-            {
-                if (_active)
-                {
-                    Restart(); // cancelled at the disclosure, or the start failed: keep checking
-                }
-                if (_live.State == SessionState.Error)
-                {
-                    _nav.Navigate(AppPage.Live); // the live page shows the error and Retry
-                }
-                return;
-            }
+            await _live.PrepareNewSessionAsync();
             _nav.Navigate(AppPage.Live);
         }
         finally

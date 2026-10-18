@@ -36,7 +36,6 @@ public sealed partial class LiveSessionViewModel : ObservableObject
     private string? _viewedCardId;
     private DateTimeOffset _lastReadingActivity = DateTimeOffset.MinValue;
     private bool _suppressSourceEvents;
-    private bool _disclosureAccepted;
 
     public LiveSessionViewModel(SessionCoordinator session, ISettingsStore store, ICredentialStore credentials, UiDispatcher ui, AppNavigator nav)
     {
@@ -103,12 +102,11 @@ public sealed partial class LiveSessionViewModel : ObservableObject
     /// <summary>A new insight card appeared (meeting mode overlay).</summary>
     public event Action<CardViewModel>? InsightArrived;
 
-    /// <summary>Asks the view to confirm the privacy disclosure; returns true when accepted.</summary>
-    public Func<Task<bool>>? ConfirmDisclosure { get; set; }
-
     // ------------------------------------------------------------------ state
 
     [ObservableProperty] public partial SessionState State { get; set; }
+    /// <summary>The page was opened from New session and listening has not started yet: only then is Start enabled.</summary>
+    [ObservableProperty] public partial bool AwaitingStart { get; set; }
     [ObservableProperty] public partial string StateText { get; set; } = "Stopped";
     [ObservableProperty] public partial string DurationText { get; set; } = "00:00";
     [ObservableProperty] public partial string? Message { get; set; }
@@ -153,7 +151,13 @@ public sealed partial class LiveSessionViewModel : ObservableObject
 
     public bool IsActive => State is SessionState.Listening or SessionState.Starting or SessionState.Reconnecting;
 
-    public bool CanStart => State is SessionState.Stopped or SessionState.Error && !(State == SessionState.Error && CanResumeAfterError);
+    public bool CanStart => AwaitingStart && !IsSessionInProgress;
+
+    /// <summary>A session is running, paused, starting/stopping, or failed but can still be resumed.</summary>
+    public bool IsSessionInProgress => !(State == SessionState.Stopped || (State == SessionState.Error && !CanResumeAfterError));
+
+    /// <summary>Back to Home is disabled while a session is in progress (stop it first).</summary>
+    public bool CanGoHome => !IsSessionInProgress;
 
     public bool CanResume => State == SessionState.Paused || (State == SessionState.Error && CanResumeAfterError);
 
@@ -193,9 +197,10 @@ public sealed partial class LiveSessionViewModel : ObservableObject
     {
         SessionState.Listening => "Listening… captions appear here when someone speaks.",
         SessionState.Paused => "Paused. Nothing is being captured.",
-        _ => HasApiKey
-            ? "No session is running. Select New session to check your microphone and speakers and start. Past sessions are on the Home page."
-            : "Add your OpenAI API key in Settings to get started.",
+        SessionState.Starting => "Starting…",
+        _ when !HasApiKey => "Add your OpenAI API key in Settings to get started.",
+        _ when AwaitingStart => "Ready. Select Start to begin listening.",
+        _ => "No session is running. Go to Home to start a new session or to review past sessions.",
     };
 
     private bool CanResumeAfterError => _session.Snapshot.SessionId != 0 && State == SessionState.Error && CanRetry;
@@ -205,14 +210,6 @@ public sealed partial class LiveSessionViewModel : ObservableObject
     [RelayCommand]
     private async Task StartAsync()
     {
-        if (!_disclosureAccepted && ConfirmDisclosure is not null)
-        {
-            if (!await ConfirmDisclosure())
-            {
-                return;
-            }
-            _disclosureAccepted = true;
-        }
         ResetFocus();
         await Task.Run(_session.StartAsync);
     }
@@ -236,9 +233,16 @@ public sealed partial class LiveSessionViewModel : ObservableObject
     [RelayCommand]
     private Task RetryAsync() => CanResumeAfterError ? ResumeAsync() : StartAsync();
 
-    /// <summary>Opens the new-session page (device check, then start).</summary>
-    [RelayCommand]
-    private void NewSession() => _nav.Navigate(AppPage.Setup);
+    /// <summary>
+    /// Called by New session's Continue: clears the previous session from this page (it is already in history) and
+    /// waits for Start. Listening begins only when the user selects Start.
+    /// </summary>
+    public async Task PrepareNewSessionAsync()
+    {
+        await Task.Run(_session.ResetAsync); // stops and saves a leftover session first; clears transcript, answers and timer
+        ResetFocus();
+        AwaitingStart = true;
+    }
 
     [RelayCommand]
     private void GoHome() => _nav.Navigate(AppPage.Home);
@@ -432,14 +436,25 @@ public sealed partial class LiveSessionViewModel : ObservableObject
 
     partial void OnStateChanged(SessionState value)
     {
+        if (value is SessionState.Listening or SessionState.Paused or SessionState.Reconnecting)
+        {
+            AwaitingStart = false; // the session has started; Start stays disabled until the next New session
+        }
         foreach (var name in new[]
                  {
                      nameof(CanStart), nameof(CanResume), nameof(CanPause), nameof(CanStop), nameof(CanReset), nameof(IsActive),
                      nameof(StartVisibility), nameof(ResumeVisibility), nameof(EmptyTranscriptText), nameof(SavedVisibility),
+                     nameof(IsSessionInProgress), nameof(CanGoHome),
                  })
         {
             OnPropertyChanged(name);
         }
+    }
+
+    partial void OnAwaitingStartChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanStart));
+        OnPropertyChanged(nameof(EmptyTranscriptText));
     }
 
     partial void OnCanRetryChanged(bool value)
@@ -448,6 +463,8 @@ public sealed partial class LiveSessionViewModel : ObservableObject
         OnPropertyChanged(nameof(CanResume));
         OnPropertyChanged(nameof(StartVisibility));
         OnPropertyChanged(nameof(ResumeVisibility));
+        OnPropertyChanged(nameof(IsSessionInProgress));
+        OnPropertyChanged(nameof(CanGoHome));
     }
 
     partial void OnFocusedCardChanged(CardViewModel? value)

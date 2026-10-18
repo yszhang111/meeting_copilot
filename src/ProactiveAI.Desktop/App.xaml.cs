@@ -226,7 +226,9 @@ public partial class App : Application
                 items.Add(new(MenuResume, "Resume"));
                 break;
             default:
-                items.Add(new(MenuStart, "Start listening", state is SessionState.Stopped or SessionState.Error));
+                // Starting is done on the session page (Home > New session > Continue > Start); the tray can start it
+                // only while that page is waiting for Start.
+                items.Add(new(MenuStart, "Start listening", GetService<LiveSessionViewModel>().CanStart));
                 break;
         }
         items.Add(new(MenuStop, "Stop", state is not SessionState.Stopped));
@@ -244,8 +246,11 @@ public partial class App : Application
                 ShowMainWindow();
                 break;
             case MenuStart:
-                ShowMainWindow(); // the privacy confirmation is shown in the main window
-                vm.StartCommand.Execute(null);
+                ShowMainWindow();
+                if (vm.CanStart)
+                {
+                    vm.StartCommand.Execute(null);
+                }
                 break;
             case MenuPause:
                 vm.PauseCommand.Execute(null);
