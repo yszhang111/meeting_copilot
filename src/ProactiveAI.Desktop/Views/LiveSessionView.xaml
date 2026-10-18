@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="ProactiveAI.Desktop.Views.LiveSessionView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ProactiveAI.Desktop.Views"
+    xmlns:vm="using:ProactiveAI.Desktop.ViewModels">
+
+    <Grid x:Name="Root" Padding="20,8,20,16" RowSpacing="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="Wide">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="1100" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ContentGrid.ColumnDefinitions[2].Width" Value="5*" />
+                        <Setter Target="ContentGrid.ColumnDefinitions[1].Width" Value="16" />
+                        <Setter Target="ContentGrid.RowDefinitions[1].Height" Value="0" />
+                        <Setter Target="ContentGrid.RowDefinitions[2].Height" Value="0" />
+                        <Setter Target="AssistantPanel.(Grid.Row)" Value="0" />
+                        <Setter Target="AssistantPanel.(Grid.Column)" Value="2" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="Narrow">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ContentGrid.ColumnDefinitions[2].Width" Value="0" />
+                        <Setter Target="ContentGrid.ColumnDefinitions[1].Width" Value="0" />
+                        <Setter Target="ContentGrid.RowDefinitions[1].Height" Value="12" />
+                        <Setter Target="ContentGrid.RowDefinitions[2].Height" Value="*" />
+                        <Setter Target="AssistantPanel.(Grid.Row)" Value="2" />
+                        <Setter Target="AssistantPanel.(Grid.Column)" Value="0" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <!-- Session controls -->
+        <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <Button Style="{StaticResource AccentButtonStyle}" Command="{x:Bind ViewModel.NewSessionCommand}" IsEnabled="{x:Bind ViewModel.CanStart, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.StartVisibility, Mode=OneWay}" AutomationProperties.Name="New session" ToolTipService.ToolTip="Check your microphone and speakers, then start a new session">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE710;" FontSize="14" /><TextBlock Text="New session" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource AccentButtonStyle}" Command="{x:Bind ViewModel.ResumeCommand}"
+                        Visibility="{x:Bind ViewModel.ResumeVisibility, Mode=OneWay}" AutomationProperties.Name="Resume listening">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE768;" FontSize="14" /><TextBlock Text="Resume" /></StackPanel>
+                </Button>
+                <Button Command="{x:Bind ViewModel.PauseCommand}" IsEnabled="{x:Bind ViewModel.CanPause, Mode=OneWay}" AutomationProperties.Name="Pause listening">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE769;" FontSize="14" /><TextBlock Text="Pause" /></StackPanel>
+                </Button>
+                <Button Command="{x:Bind ViewModel.StopCommand}" IsEnabled="{x:Bind ViewModel.CanStop, Mode=OneWay}" AutomationProperties.Name="Stop session">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE71A;" FontSize="14" /><TextBlock Text="Stop" /></StackPanel>
+                </Button>
+                <Button IsEnabled="{x:Bind ViewModel.CanReset, Mode=OneWay}" AutomationProperties.Name="Reset session" ToolTipService.ToolTip="Stop and clear this view (a saved session stays in history)">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE74D;" FontSize="14" /><TextBlock Text="Reset" /></StackPanel>
+                    <Button.Flyout>
+                        <Flyout x:Name="ResetFlyout">
+                            <StackPanel Spacing="10" MaxWidth="300">
+                                <TextBlock TextWrapping="Wrap" Text="Stop listening and clear the transcript, answers, insights and speaker labels from this view? A saved session stays in history on the Home page. Preparation notes are kept." />
+                                <Button Style="{StaticResource AccentButtonStyle}" Content="Reset" Click="ConfirmReset_Click" />
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+            </StackPanel>
+
+            <ComboBox Grid.Column="1" VerticalAlignment="Center" MinWidth="140" SelectedIndex="{x:Bind ViewModel.ScenarioIndex, Mode=TwoWay}"
+                      AutomationProperties.Name="Scenario" ToolTipService.ToolTip="Scenario">
+                <ComboBoxItem Content="Meeting" />
+                <ComboBoxItem Content="Interview" />
+                <ComboBoxItem Content="Defense" />
+            </ComboBox>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <ToggleButton IsChecked="{x:Bind ViewModel.SystemEnabled, Mode=TwoWay}" AutomationProperties.Name="System audio" ToolTipService.ToolTip="Capture system playback from the selected output device">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE7F5;" FontSize="14" /><TextBlock Text="System audio" /></StackPanel>
+                </ToggleButton>
+                <ToggleButton IsChecked="{x:Bind ViewModel.MicrophoneEnabled, Mode=TwoWay}" AutomationProperties.Name="Microphone" ToolTipService.ToolTip="Capture your microphone (on by default; your choice is remembered)">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE720;" FontSize="14" /><TextBlock Text="Microphone" /></StackPanel>
+                </ToggleButton>
+                <ToggleButton IsChecked="{x:Bind ViewModel.MicrophoneMuted, Mode=TwoWay}" Visibility="{x:Bind ViewModel.MicControlsVisibility, Mode=OneWay}"
+                              AutomationProperties.Name="Mute microphone" ToolTipService.ToolTip="Mute stops microphone capture and upload">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE74F;" FontSize="14" /><TextBlock Text="Mute" /></StackPanel>
+                </ToggleButton>
+            </StackPanel>
+
+            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <Ellipse Width="10" Height="10" Fill="{x:Bind local:Ui.Accent(ViewModel.IsActive), Mode=OneWay}" VerticalAlignment="Center" />
+                <TextBlock Text="{x:Bind ViewModel.StateText, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center"
+                           AutomationProperties.LiveSetting="Polite" />
+                <TextBlock Text="{x:Bind ViewModel.DurationText, Mode=OneWay}" VerticalAlignment="Center" FontFamily="Consolas" AutomationProperties.Name="Session duration" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Status strip -->
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
+            <StackPanel Orientation="Horizontal">
+                <Border Style="{StaticResource StatusChipStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE7F5;" FontSize="13" />
+                        <ProgressBar Width="48" Value="{x:Bind ViewModel.SystemLevel, Mode=OneWay}" VerticalAlignment="Center" AutomationProperties.Name="System audio level" />
+                        <TextBlock Text="{x:Bind ViewModel.SystemStatusText, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource StatusChipStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE720;" FontSize="13" />
+                        <ProgressBar Width="48" Value="{x:Bind ViewModel.MicLevel, Mode=OneWay}" VerticalAlignment="Center" AutomationProperties.Name="Microphone level" />
+                        <TextBlock Text="{x:Bind ViewModel.MicStatusText, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource StatusChipStyle}">
+                    <TextBlock Text="{x:Bind ViewModel.TranscriptionStatusText, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" />
+                </Border>
+                <Border Style="{StaticResource StatusChipStyle}">
+                    <TextBlock Text="{x:Bind ViewModel.DiarizationStatusText, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" />
+                </Border>
+                <Border Style="{StaticResource StatusChipStyle}">
+                    <TextBlock Text="{x:Bind ViewModel.AssistantStatusText, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" />
+                </Border>
+                <Border Style="{StaticResource StatusChipStyle}" Visibility="{x:Bind ViewModel.EchoVisibility, Mode=OneWay}">
+                    <TextBlock Text="{x:Bind ViewModel.EchoStatusText, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" />
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Messages and disclosure -->
+        <StackPanel Grid.Row="2" Spacing="6">
+            <InfoBar IsOpen="{x:Bind ViewModel.HasMessage, Mode=TwoWay}" Severity="{x:Bind ViewModel.MessageSeverity, Mode=OneWay}"
+                     Message="{x:Bind ViewModel.Message, Mode=OneWay}" IsClosable="True">
+                <InfoBar.ActionButton>
+                    <Button Content="Retry" Command="{x:Bind ViewModel.RetryCommand}" Visibility="{x:Bind local:Ui.Visible(ViewModel.CanRetry), Mode=OneWay}" />
+                </InfoBar.ActionButton>
+            </InfoBar>
+            <InfoBar IsOpen="True" IsClosable="False" Severity="Success" Visibility="{x:Bind ViewModel.SavedVisibility, Mode=OneWay}"
+                     Title="Session saved to history" Message="The transcript and answers are on the Home page (text only, encrypted for your Windows account).">
+                <InfoBar.ActionButton>
+                    <Button Content="Go to Home" Command="{x:Bind ViewModel.GoHomeCommand}" />
+                </InfoBar.ActionButton>
+            </InfoBar>
+            <InfoBar IsOpen="True" IsClosable="True" Severity="Informational" Title="Cloud processing"
+                     Message="While a session runs, system audio (everything playing on the selected output device) and your microphone, if on, are streamed to OpenAI for transcription. Short in-memory audio windows and temporary voice snippets are sent for speaker labels. Recent transcript, earlier questions of this session with your replies, relevant preparation notes and, in interview mode, your selected résumé are sent to the AI model. Audio is never saved; the transcript text and answers are saved to History on this PC (encrypted; can be turned off in Settings). Obtain participants' consent where required." />
+            <InfoBar IsOpen="{x:Bind ViewModel.NewerAnswerAvailable, Mode=OneWay}" IsClosable="False" Severity="Informational"
+                     Message="A newer question was answered while you were reading.">
+                <InfoBar.ActionButton>
+                    <Button Content="Show newest answer" Command="{x:Bind ViewModel.ShowNewestCommand}" />
+                </InfoBar.ActionButton>
+            </InfoBar>
+        </StackPanel>
+
+        <!-- Transcript and assistant -->
+        <Grid x:Name="ContentGrid" Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="6*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="5*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="0" />
+                <RowDefinition Height="0" />
+            </Grid.RowDefinitions>
+
+            <Border Style="{StaticResource CardBorderStyle}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Padding="16,10,10,6" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Live transcript" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" IsEnabled="{x:Bind ViewModel.HasSelection, Mode=OneWay}" Click="AnswerSelection_Click"
+                                AutomationProperties.Name="Answer selected question" ToolTipService.ToolTip="Select transcript lines, then ask for an answer">
+                            <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE897;" FontSize="14" /><TextBlock Text="Answer this question" /></StackPanel>
+                        </Button>
+                        <Button Grid.Column="2" AutomationProperties.Name="Speakers">
+                            <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE716;" FontSize="14" /><TextBlock Text="Speakers" /></StackPanel>
+                            <Button.Flyout>
+                                <Flyout Placement="BottomEdgeAlignedRight">
+                                    <StackPanel Width="320" Spacing="8">
+                                        <TextBlock Text="Session speakers" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                        <TextBlock Style="{StaticResource CaptionMutedStyle}"
+                                                   Text="Labels come from audio-based speaker diarization and exist only for this session. Names are only what you enter; real identities are never guessed." />
+                                        <ListView ItemsSource="{x:Bind ViewModel.Speakers}" SelectionMode="None" MaxHeight="320" IsItemClickEnabled="True" ItemClick="SpeakerList_ItemClick">
+                                            <ListView.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:SpeakerViewModel">
+                                                    <Grid ColumnSpacing="10" Padding="0,6">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Ellipse Width="10" Height="10" Fill="{x:Bind Brush, Mode=OneWay}" VerticalAlignment="Center" />
+                                                        <StackPanel Grid.Column="1">
+                                                            <TextBlock Text="{x:Bind Name, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                                            <TextBlock Text="{x:Bind Details, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ListView.ItemTemplate>
+                                        </ListView>
+                                        <TextBlock Style="{StaticResource CaptionMutedStyle}" Text="Select a speaker to rename it or set its role." />
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                    </Grid>
+                    <TextBlock Grid.Row="1" Margin="16,0,16,4" Text="{x:Bind ViewModel.TrimNotice, Mode=OneWay}" Visibility="{x:Bind ViewModel.TrimNoticeVisibility, Mode=OneWay}"
+                               Style="{StaticResource CaptionMutedStyle}" />
+                    <ListView x:Name="TranscriptList" Grid.Row="2" ItemsSource="{x:Bind ViewModel.Segments}" SelectionMode="Extended"
+                              SelectionChanged="TranscriptList_SelectionChanged" Padding="4,0,4,8" AutomationProperties.Name="Live transcript">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="12,0,12,0" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SegmentViewModel">
+                                <Grid Padding="0,6" ColumnSpacing="10" CornerRadius="4" Background="{x:Bind local:Ui.Highlight(IsHighlighted), Mode=OneWay}"
+                                      AutomationProperties.Name="{x:Bind AutomationName, Mode=OneWay}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="48" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{x:Bind TimeText, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" FontFamily="Consolas" Margin="0,3,0,0" />
+                                    <StackPanel Grid.Column="1" Spacing="2" Visibility="{x:Bind SpeechVisibility, Mode=OneWay}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Ellipse Width="8" Height="8" Fill="{x:Bind SpeakerBrush, Mode=OneWay}" VerticalAlignment="Center" />
+                                            <HyperlinkButton Padding="2,0" Tag="{x:Bind Id}" Click="SpeakerLabel_Click" ToolTipService.ToolTip="Rename or correct speaker">
+                                                <TextBlock Text="{x:Bind SpeakerName, Mode=OneWay}" FontWeight="SemiBold" Style="{StaticResource CaptionTextBlockStyle}" />
+                                            </HyperlinkButton>
+                                            <FontIcon Glyph="{x:Bind SourceGlyph, Mode=OneWay}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                      ToolTipService.ToolTip="{x:Bind SourceName, Mode=OneWay}" VerticalAlignment="Center" />
+                                            <TextBlock Text="{x:Bind AttributionText, Mode=OneWay}" Visibility="{x:Bind AttributionVisibility, Mode=OneWay}"
+                                                       Style="{StaticResource CaptionMutedStyle}" FontStyle="Italic" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock Text="{x:Bind Text, Mode=OneWay}" TextWrapping="Wrap" Opacity="{x:Bind TextOpacity, Mode=OneWay}"
+                                                   FontStyle="{x:Bind TextStyle, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" />
+                                        <TextBlock Text="{x:Bind Note, Mode=OneWay}" Visibility="{x:Bind NoteVisibility, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" />
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Visibility="{x:Bind MarkerVisibility, Mode=OneWay}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                            BorderThickness="0,0,0,1" Padding="0,2,0,6" ToolTipService.ToolTip="{x:Bind MarkerToolTip, Mode=OneWay}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon Glyph="&#xE946;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            <TextBlock Text="{x:Bind MarkerText, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <TextBlock Grid.Row="2" Margin="24" MaxWidth="460" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
+                               Text="{x:Bind ViewModel.EmptyTranscriptText, Mode=OneWay}" Visibility="{x:Bind ViewModel.EmptyTranscriptVisibility, Mode=OneWay}"
+                               Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    <Button x:Name="JumpToLiveButton" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,16"
+                            Visibility="Collapsed" Click="JumpToLive_Click" Style="{StaticResource AccentButtonStyle}" AutomationProperties.Name="Return to live transcript">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE74B;" FontSize="12" /><TextBlock Text="Back to live" /></StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <Border x:Name="AssistantPanel" Grid.Column="2" Style="{StaticResource CardBorderStyle}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <SelectorBar x:Name="PanelSelector" Margin="8,4,8,0" SelectionChanged="PanelSelector_SelectionChanged">
+                        <SelectorBarItem x:Name="AssistantTab" Text="Assistant" IsSelected="True" />
+                        <SelectorBarItem x:Name="HistoryTab" Text="History" />
+                        <SelectorBarItem x:Name="PrepTab" Text="Preparation" />
+                    </SelectorBar>
+
+                    <!-- Assistant: current answer and meeting insights -->
+                    <Grid x:Name="AssistantContent" Grid.Row="1" Padding="16,8,8,12" RowSpacing="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <local:AnswerCardView x:Name="FocusedAnswer" Card="{x:Bind ViewModel.FocusedCard, Mode=OneWay}" Host="{x:Bind ViewModel}"
+                                              Visibility="{x:Bind ViewModel.FocusedCardVisibility, Mode=OneWay}" />
+                        <StackPanel Spacing="8" VerticalAlignment="Center" Padding="8" Visibility="{x:Bind ViewModel.NoFocusedCardVisibility, Mode=OneWay}">
+                            <FontIcon Glyph="&#xEA80;" FontSize="28" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Style="{StaticResource BodyTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="{x:Bind ViewModel.AnswerModeVisibility, Mode=OneWay}"
+                                       Text="When the interviewer or examiner asks a substantive question, a full answer you can adapt appears here. You can also select transcript lines and choose Answer this question." />
+                            <TextBlock HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Style="{StaticResource BodyTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="{x:Bind ViewModel.MeetingModeVisibility, Mode=OneWay}"
+                                       Text="In meeting mode the assistant stays quiet and only offers an occasional insight or follow-up question when it would genuinely help." />
+                        </StackPanel>
+                        <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind ViewModel.Insights}" Visibility="{x:Bind ViewModel.MeetingModeVisibility, Mode=OneWay}" MaxHeight="320">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Spacing="8" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:CardViewModel">
+                                    <Border Style="{StaticResource CardBorderStyle}" Padding="12,8">
+                                        <Grid ColumnSpacing="6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="{x:Bind Heading, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" TextWrapping="Wrap" />
+                                                <TextBlock Text="{x:Bind Suggestion, Mode=OneWay}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                                                <TextBlock Text="{x:Bind SuggestedQuestion, Mode=OneWay}" Visibility="{x:Bind SuggestedQuestionVisibility, Mode=OneWay}"
+                                                           FontStyle="Italic" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                                                <TextBlock Text="{x:Bind TimeText, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                                                <Button Style="{StaticResource SubtleButtonStyle}" Padding="6" Click="InsightEvidence_Click" Tag="{x:Bind Id}" ToolTipService.ToolTip="Show evidence" AutomationProperties.Name="Show evidence">
+                                                    <FontIcon Glyph="&#xE7E6;" FontSize="12" />
+                                                </Button>
+                                                <Button Style="{StaticResource SubtleButtonStyle}" Padding="6" Click="InsightCopy_Click" Tag="{x:Bind Id}" ToolTipService.ToolTip="Copy" AutomationProperties.Name="Copy insight">
+                                                    <FontIcon Glyph="&#xE8C8;" FontSize="12" />
+                                                </Button>
+                                                <Button Style="{StaticResource SubtleButtonStyle}" Padding="6" Click="InsightDismiss_Click" Tag="{x:Bind Id}" ToolTipService.ToolTip="Dismiss" AutomationProperties.Name="Dismiss insight">
+                                                    <FontIcon Glyph="&#xE711;" FontSize="12" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </Grid>
+
+                    <!-- History -->
+                    <Grid x:Name="HistoryContent" Grid.Row="1" Visibility="Collapsed" Padding="8,8,8,12">
+                        <ListView ItemsSource="{x:Bind ViewModel.History}" SelectionMode="None" IsItemClickEnabled="True" ItemClick="History_ItemClick"
+                                  AutomationProperties.Name="Answer history">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="vm:CardViewModel">
+                                    <StackPanel Padding="4,8" Spacing="2">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Ellipse Width="8" Height="8" VerticalAlignment="Center" Fill="{x:Bind local:Ui.SeverityBrush(StateSeverity), Mode=OneWay}" />
+                                            <TextBlock Text="{x:Bind TimeText, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" />
+                                            <TextBlock Text="{x:Bind StateText, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" />
+                                            <FontIcon Glyph="&#xE718;" FontSize="11" Visibility="{x:Bind local:Ui.Visible(IsPinned), Mode=OneWay}" />
+                                        </StackPanel>
+                                        <TextBlock Text="{x:Bind Heading, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{x:Bind DirectPosition, Mode=OneWay}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Style="{StaticResource CaptionMutedStyle}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+
+                    <!-- Preparation -->
+                    <ScrollViewer x:Name="PrepContent" Grid.Row="1" Visibility="Collapsed" Padding="16,8,16,12">
+                        <StackPanel Spacing="12" Padding="0,0,12,0">
+                            <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.InterviewVisibility, Mode=OneWay}">
+                                <TextBlock Text="Résumé" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <local:ResumePickerView />
+                            </StackPanel>
+                            <TextBlock Text="Notes" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="{x:Bind ViewModel.PrepSummary, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" />
+                            <TextBlock Style="{StaticResource CaptionMutedStyle}"
+                                       Text="Answers treat these notes, your résumé (interview mode) and what you actually said as facts about you. Leave out anything you would not state in the interview or defense." />
+                            <TextBox Header="Role or research topic" Text="{x:Bind ViewModel.PrepRole, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="8000" MinHeight="64"
+                                     PlaceholderText="e.g. Senior backend engineer interview / Thesis: traffic flow prediction with graph neural networks" />
+                            <TextBox Header="Your personal contribution" Text="{x:Bind ViewModel.PrepContribution, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="8000" MinHeight="80"
+                                     PlaceholderText="What you did yourself, team size, responsibilities" />
+                            <TextBox Header="Project or method details" Text="{x:Bind ViewModel.PrepMethod, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="8000" MinHeight="80"
+                                     PlaceholderText="Architecture, method, baselines, datasets, design choices" />
+                            <TextBox Header="Verified results" Text="{x:Bind ViewModel.PrepResults, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="8000" MinHeight="64"
+                                     PlaceholderText="Numbers and outcomes you can stand behind" />
+                            <TextBox Header="Limitations" Text="{x:Bind ViewModel.PrepLimitations, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="8000" MinHeight="64" />
+                            <TextBox Header="Terminology (also used as transcription hints)" Text="{x:Bind ViewModel.PrepTerminology, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="8000" MinHeight="64"
+                                     PlaceholderText="Comma or line separated terms, product names, acronyms" />
+                            <Button Content="Clear preparation notes" HorizontalAlignment="Left">
+                                <Button.Flyout>
+                                    <Flyout x:Name="ClearPrepFlyout">
+                                        <StackPanel Spacing="10" MaxWidth="280">
+                                            <TextBlock TextWrapping="Wrap" Text="Clear all preparation notes? This cannot be undone." />
+                                            <Button Style="{StaticResource AccentButtonStyle}" Content="Clear" Click="ConfirmClearPrep_Click" />
+                                        </StackPanel>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

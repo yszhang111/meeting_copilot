@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ProactiveAI.Core/ProactiveAI.Core.csproj" />
+    <Project Path="src/ProactiveAI.Desktop/ProactiveAI.Desktop.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="src/ProactiveAI.Infrastructure/ProactiveAI.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ProactiveAI.Tests/ProactiveAI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/ProactiveAI.Probe/ProactiveAI.Probe.csproj" />
+  </Folder>
+</Solution>

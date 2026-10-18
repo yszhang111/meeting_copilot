@@ -1,0 +1,15 @@
+{
+  "name": "defense-tts",
+  "scenario": "Defense",
+  "preparation": "## RoleOrTopic\nMaster's thesis defense: graph neural networks for short-term urban traffic flow prediction.\n## ProjectOrMethod\nA spatio-temporal model combining a graph convolutional network over the road-sensor graph with a GRU over time. Baselines: ARIMA and an LSTM. Dataset: PeMS04, 60-minute horizon.\n## VerifiedResults\nMAE 19.8 for the proposed model versus 23.4 for the LSTM and 32.1 for ARIMA on PeMS04 at the 60-minute horizon.\n## Limitations\nThe adjacency matrix is fixed and built from road distance, so changes in the road network are not handled. Training takes about 2.5 times longer than the LSTM.\n## Terminology\nGCN, GRU, PeMS04, MAE, adjacency matrix",
+  "voices": {
+    "E": { "voice": "David" },
+    "F": { "voice": "Julie" }
+  },
+  "lines": [
+    { "speaker": "E", "text": "Thank you for the presentation. My first question is about your method." },
+    { "speaker": "E", "text": "Why did you choose a graph neural network instead of a plain LSTM, and what did that choice cost you?", "waitAfterMs": 40000 },
+    { "speaker": "F", "text": "Following up on that. Your adjacency matrix is fixed. What happens to your model when a road is closed for construction?", "waitAfterMs": 40000 },
+    { "speaker": "E", "text": "And how well does the model generalize to a different city? What accuracy did you get there?", "waitAfterMs": 40000 }
+  ]
+}

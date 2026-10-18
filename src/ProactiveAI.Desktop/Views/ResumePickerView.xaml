@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="ProactiveAI.Desktop.Views.ResumePickerView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ProactiveAI.Desktop.Views"
+    AllowDrop="True" DragOver="OnDragOver" Drop="OnDrop">
+
+    <StackPanel Spacing="8">
+        <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ComboBox ItemsSource="{x:Bind ViewModel.Options}" SelectedItem="{x:Bind ViewModel.Selected, Mode=TwoWay}" HorizontalAlignment="Stretch"
+                      AutomationProperties.Name="Résumé used in interview answers" />
+            <Button Grid.Column="1" Click="Upload_Click" IsEnabled="{x:Bind local:Ui.Not(ViewModel.IsBusy), Mode=OneWay}" AutomationProperties.Name="Upload résumé">
+                <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE898;" FontSize="14" /><TextBlock Text="Upload résumé…" /></StackPanel>
+            </Button>
+            <Button Grid.Column="2" Visibility="{x:Bind ViewModel.ResumeVisibility, Mode=OneWay}" AutomationProperties.Name="Delete this résumé" ToolTipService.ToolTip="Delete this résumé">
+                <FontIcon Glyph="&#xE74D;" FontSize="14" />
+                <Button.Flyout>
+                    <Flyout x:Name="DeleteFlyout">
+                        <StackPanel Spacing="10" MaxWidth="280">
+                            <TextBlock TextWrapping="Wrap" Text="Delete this saved résumé from this PC? This cannot be undone." />
+                            <Button Style="{StaticResource AccentButtonStyle}" Content="Delete" Click="ConfirmDelete_Click" />
+                        </StackPanel>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
+        </Grid>
+        <TextBlock Text="{x:Bind ViewModel.Detail, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" TextWrapping="Wrap" />
+        <ProgressBar IsIndeterminate="True" Visibility="{x:Bind local:Ui.Visible(ViewModel.IsBusy), Mode=OneWay}" />
+        <InfoBar IsOpen="True" IsClosable="False" Severity="{x:Bind ViewModel.StatusSeverity, Mode=OneWay}" Message="{x:Bind ViewModel.Status, Mode=OneWay}"
+                 Visibility="{x:Bind ViewModel.StatusVisibility, Mode=OneWay}" />
+        <Expander Header="Extracted text (what the AI reads)" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                  Visibility="{x:Bind ViewModel.ResumeVisibility, Mode=OneWay}">
+            <TextBox Text="{x:Bind ViewModel.PreviewText, Mode=OneWay}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="260"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Extracted résumé text" />
+        </Expander>
+        <TextBlock Style="{StaticResource CaptionMutedStyle}" TextWrapping="Wrap"
+                   Text="PDF or Word (.docx); you can also drop the file here. Only the extracted text is kept, encrypted for your Windows account — the file itself is not stored. The résumé is used in interview mode and sent to OpenAI with answer requests." />
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,15 @@
+{
+  "name": "interview-tts",
+  "scenario": "Interview",
+  "preparation": "## RoleOrTopic\nInterviewing for a Senior Backend Engineer position on a payments platform team.\n## Contribution\nAt Northwind Payments (2021-2024) I designed and led the idempotency layer for the card-capture API, with one other engineer. I wrote the design doc and the reconciliation job.\n## VerifiedResults\nDuplicate captures fell from about 40 per week to zero over the following quarter. The reconciliation job runs nightly over roughly 2 million transactions in under 15 minutes.\n## Limitations\nThe idempotency keys were kept for 24 hours only, so very late client retries were not covered.\n## Terminology\nidempotency key, exactly-once, outbox pattern, Kafka, PostgreSQL",
+  "voices": {
+    "I": { "voice": "Zira" },
+    "J": { "voice": "David" }
+  },
+  "lines": [
+    { "speaker": "I", "text": "Thanks for joining today. Let's start with a technical question." },
+    { "speaker": "I", "text": "How would you design a payment API so that a client retry never charges the customer twice? And what happens if the database commit succeeds but the response is lost?", "waitAfterMs": 40000 },
+    { "speaker": "J", "text": "Let me follow up on that. Why not just rely on exactly-once delivery from Kafka instead of building idempotency keys yourself?", "waitAfterMs": 40000 },
+    { "speaker": "I", "text": "Okay. Tell me about a time you made a production system more reliable. What exactly did you do, and what was the measurable result?", "waitAfterMs": 40000 }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "feed-three-speakers",
+  "scenario": "Interview",
+  "voices": {
+    "Interviewer": { "voice": "Zira" },
+    "Candidate": { "voice": "David" },
+    "Observer": { "voice": "Julie", "rate": "-5%" }
+  },
+  "lines": [
+    { "speaker": "Interviewer", "text": "Thanks for joining us today. Let's start with your background in distributed systems." },
+    { "speaker": "Candidate", "text": "Sure. For the last three years I have worked on payment infrastructure, mostly on the reliability of our settlement pipeline." },
+    { "speaker": "Observer", "text": "Before we go deeper, could you explain what exactly-once delivery means in practice?" },
+    { "speaker": "Candidate", "text": "In practice it means the effect of a message is applied once, usually by combining at-least-once delivery with idempotent processing." },
+    { "speaker": "Interviewer", "text": "Why not rely on the message broker to guarantee it for you?" },
+    { "speaker": "Candidate", "text": "Because the broker only sees its own boundary. Once a consumer writes to a database, the broker cannot know whether that write happened." },
+    { "speaker": "Observer", "text": "That makes sense. How did you test this under failure conditions?", "pauseAfterMs": 900 },
+    { "speaker": "Candidate", "text": "We injected crashes between the database commit and the acknowledgement, and verified that replays did not create duplicate settlements." },
+    { "speaker": "Interviewer", "text": "Good. Last question from me. What would you change if traffic grew ten times?" }
+  ]
+}

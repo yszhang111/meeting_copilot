@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="ProactiveAI.Desktop.Views.SettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ProactiveAI.Desktop.Views">
+
+    <ScrollViewer Padding="28,8,28,24">
+        <StackPanel Spacing="18" MaxWidth="880" HorizontalAlignment="Left">
+            <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}" />
+
+            <!-- OpenAI -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="OpenAI API key" Style="{StaticResource SectionHeaderStyle}" />
+                    <TextBlock Text="{x:Bind ViewModel.ApiKeyStatus, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <PasswordBox x:Name="ApiKeyBox" PlaceholderText="Paste a new key to store or replace it" AutomationProperties.Name="OpenAI API key" />
+                        <Button Grid.Column="1" Content="Save key" Style="{StaticResource AccentButtonStyle}" Click="SaveKey_Click" />
+                        <Button Grid.Column="2" Content="Delete key" Command="{x:Bind ViewModel.DeleteApiKeyCommand}" IsEnabled="{x:Bind ViewModel.HasApiKey, Mode=OneWay}" />
+                        <Button Grid.Column="3" Content="Test models" Command="{x:Bind ViewModel.TestConnectionCommand}" IsEnabled="{x:Bind ViewModel.HasApiKey, Mode=OneWay}" />
+                    </Grid>
+                    <ProgressBar IsIndeterminate="True" Visibility="{x:Bind local:Ui.Visible(ViewModel.IsTesting), Mode=OneWay}" />
+                    <TextBlock Text="{x:Bind ViewModel.ConnectionTestResult, Mode=OneWay}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                </StackPanel>
+            </Border>
+
+            <!-- Audio -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="12">
+                    <Grid>
+                        <TextBlock Text="Audio sources" Style="{StaticResource SectionHeaderStyle}" />
+                        <Button HorizontalAlignment="Right" Click="RefreshDevices_Click" AutomationProperties.Name="Refresh devices">
+                            <StackPanel Orientation="Horizontal" Spacing="6"><FontIcon Glyph="&#xE72C;" FontSize="12" /><TextBlock Text="Refresh" /></StackPanel>
+                        </Button>
+                    </Grid>
+                    <ComboBox Header="Playback device (system audio)" ItemsSource="{x:Bind ViewModel.PlaybackDevices}" SelectedItem="{x:Bind ViewModel.SelectedPlayback, Mode=TwoWay}"
+                              HorizontalAlignment="Stretch" />
+                    <TextBlock Style="{StaticResource CaptionMutedStyle}"
+                               Text="System capture records everything playing on this device, including other applications. Turn system audio on or off on the New session page or during a session. Devices can be changed while stopped; changes apply at the next Start." />
+                    <ComboBox Header="Microphone" ItemsSource="{x:Bind ViewModel.MicrophoneDevices}" SelectedItem="{x:Bind ViewModel.SelectedMicrophone, Mode=TwoWay}"
+                              HorizontalAlignment="Stretch" />
+                    <TextBlock Style="{StaticResource CaptionMutedStyle}"
+                               Text="The microphone is on by default; switch it off on the New session page or during a session and that choice is remembered. Your device choice is remembered too." />
+                    <ToggleSwitch Header="Shared microphone (several people near one microphone)" IsOn="{x:Bind ViewModel.SharedMicrophone, Mode=TwoWay}"
+                                  OffContent="Personal microphone: shown as 'Me (microphone)', a source alias rather than verified identity"
+                                  OnContent="Shared: microphone speech is diarized into separate speakers" />
+                    <ComboBox Header="Echo cancellation for the microphone (loudspeakers)" SelectedIndex="{x:Bind ViewModel.EchoModeIndex, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                        <ComboBoxItem Content="Built-in echo canceller (recommended)" />
+                        <ComboBoxItem Content="Windows communications processing" />
+                        <ComboBoxItem Content="Off (headphones)" />
+                    </ComboBox>
+                    <TextBlock Style="{StaticResource CaptionMutedStyle}"
+                               Text="The built-in canceller removes the captured system audio from the raw microphone signal before transcription. It needs system audio capture on and takes a few seconds of playback to learn the echo path; residual echo is still detected and hidden. Without system audio capture, Windows processing is used. Changes apply the next time the microphone starts." />
+                </StackPanel>
+            </Border>
+
+            <!-- Session history -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Session history" Style="{StaticResource SectionHeaderStyle}" />
+                    <ToggleSwitch Header="Save sessions to history" IsOn="{x:Bind ViewModel.SaveSessionHistory, Mode=TwoWay}"
+                                  OnContent="On: transcript text and answers are saved when a session stops (and every 30 s while it runs). Audio is never saved."
+                                  OffContent="Off: new sessions are not saved" />
+                    <TextBlock Style="{StaticResource CaptionMutedStyle}" Text="{x:Bind ViewModel.HistoryLocation}" IsTextSelectionEnabled="True" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Content="Delete all saved sessions">
+                            <Button.Flyout>
+                                <Flyout x:Name="DeleteHistoryFlyout">
+                                    <StackPanel Spacing="10" MaxWidth="300">
+                                        <TextBlock TextWrapping="Wrap" Text="Delete every saved transcript and answer? This cannot be undone." />
+                                        <Button Style="{StaticResource AccentButtonStyle}" Content="Delete all" Click="ConfirmDeleteHistory_Click" />
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                        <TextBlock Text="{x:Bind ViewModel.HistoryStatus, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource CaptionMutedStyle}" TextWrapping="Wrap" x:Name="ResumeLocationText" IsTextSelectionEnabled="True" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Content="Delete all saved résumés">
+                            <Button.Flyout>
+                                <Flyout x:Name="DeleteResumesFlyout">
+                                    <StackPanel Spacing="10" MaxWidth="300">
+                                        <TextBlock TextWrapping="Wrap" Text="Delete every saved résumé text? This cannot be undone." />
+                                        <Button Style="{StaticResource AccentButtonStyle}" Content="Delete all" Click="ConfirmDeleteResumes_Click" />
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                        <TextBlock x:Name="ResumeStatusText" Style="{StaticResource CaptionMutedStyle}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Assistant -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Assistant" Style="{StaticResource SectionHeaderStyle}" />
+                    <Grid ColumnSpacing="12" RowSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Header="Default scenario" SelectedIndex="{x:Bind ViewModel.ScenarioIndex, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                            <ComboBoxItem Content="Meeting" />
+                            <ComboBoxItem Content="Interview" />
+                            <ComboBoxItem Content="Defense" />
+                        </ComboBox>
+                        <ComboBox Grid.Column="1" Header="Answer depth" SelectedIndex="{x:Bind ViewModel.DepthIndex, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                            <ComboBoxItem Content="Normal (about 1–2 minutes spoken)" />
+                            <ComboBoxItem Content="Detailed (about 2–3 minutes spoken)" />
+                        </ComboBox>
+                        <ComboBox Grid.Column="2" Header="Answer language" SelectedIndex="{x:Bind ViewModel.LanguageIndex, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                            <ComboBoxItem Content="Same as the question" />
+                            <ComboBoxItem Content="Chinese" />
+                            <ComboBoxItem Content="English" />
+                        </ComboBox>
+                    </Grid>
+                    <Slider Header="Question and insight sensitivity" Minimum="1" Maximum="3" StepFrequency="1" TickFrequency="1" TickPlacement="BottomRight"
+                            Value="{x:Bind ViewModel.Sensitivity, Mode=TwoWay}" MaxWidth="360" HorizontalAlignment="Left" />
+                    <TextBlock Style="{StaticResource CaptionMutedStyle}" Text="1 = only clear questions, 3 = also borderline questions and more meeting insights." />
+                    <ToggleSwitch Header="AI question detection" IsOn="{x:Bind ViewModel.AiQuestionDetection, Mode=TwoWay}"
+                                  OffContent="Off: only the local rules decide whether something is a question"
+                                  OnContent="On: clear questions are answered immediately; anything the local rules are unsure about is checked by a small AI model (about 1 s)" />
+                </StackPanel>
+            </Border>
+
+            <!-- Budgets -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Request budgets and notification limits" Style="{StaticResource SectionHeaderStyle}" />
+                    <TextBlock Style="{StaticResource CaptionMutedStyle}"
+                               Text="Hard limits enforced by the scheduler, including retries. Transcription and speaker labeling are budgeted separately from reasoning requests." />
+                    <Grid ColumnSpacing="12" RowSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <NumberBox Header="Meeting: analysis interval (s)" Minimum="4" Maximum="60" SpinButtonPlacementMode="Compact" Value="{x:Bind ViewModel.MeetingInterval, Mode=TwoWay}" />
+                        <NumberBox Grid.Column="1" Header="Meeting: requests per minute" Minimum="1" Maximum="10" SpinButtonPlacementMode="Compact" Value="{x:Bind ViewModel.MeetingRequests, Mode=TwoWay}" />
+                        <NumberBox Grid.Column="2" Header="Meeting: overlay cooldown (s)" Minimum="10" Maximum="300" SpinButtonPlacementMode="Compact" Value="{x:Bind ViewModel.MeetingCooldown, Mode=TwoWay}" />
+                        <NumberBox Grid.Row="1" Header="Meeting: insights per minute" Minimum="1" Maximum="6" SpinButtonPlacementMode="Compact" Value="{x:Bind ViewModel.MeetingNotifications, Mode=TwoWay}" />
+                        <NumberBox Grid.Row="1" Grid.Column="1" Header="Meeting: repeat suppression (min)" Minimum="1" Maximum="15" SpinButtonPlacementMode="Compact" Value="{x:Bind ViewModel.MeetingSuppression, Mode=TwoWay}" />
+                        <NumberBox Grid.Row="1" Grid.Column="2" Header="Meeting: insight display (s)" Minimum="5" Maximum="60" SpinButtonPlacementMode="Compact" Value="{x:Bind ViewModel.InsightDisplay, Mode=TwoWay}" />
+                        <NumberBox Grid.Row="2" Header="Interview/defense: requests per minute" Minimum="2" Maximum="20" SpinButtonPlacementMode="Compact" Value="{x:Bind ViewModel.InterviewRequests, Mode=TwoWay}" />
+                        <NumberBox Grid.Row="2" Grid.Column="1" Header="Question debounce (ms)" Minimum="300" Maximum="4000" SmallChange="100" SpinButtonPlacementMode="Compact" Value="{x:Bind ViewModel.QuestionDebounce, Mode=TwoWay}" />
+                        <NumberBox Grid.Row="2" Grid.Column="2" Header="Speaker-label requests per minute" Minimum="2" Maximum="30" SpinButtonPlacementMode="Compact" Value="{x:Bind ViewModel.DiarizationRequests, Mode=TwoWay}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Models -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Models" Style="{StaticResource SectionHeaderStyle}" />
+                    <TextBlock Style="{StaticResource CaptionMutedStyle}"
+                               Text="Model identifiers are configurable. Availability for your account is confirmed only by a real request (use Test models, then start a session)." />
+                    <Grid ColumnSpacing="12" RowSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBox Header="Live transcription model (Realtime API)" Text="{x:Bind ViewModel.TranscriptionModel, Mode=TwoWay}" />
+                        <ComboBox Grid.Column="1" Header="Caption delay" ItemsSource="{x:Bind ViewModel.DelayOptions}" SelectedItem="{x:Bind ViewModel.TranscriptionDelay, Mode=TwoWay}" HorizontalAlignment="Stretch" />
+                        <TextBox Grid.Row="1" Header="Speaker labeling model (transcriptions API)" Text="{x:Bind ViewModel.DiarizationModel, Mode=TwoWay}" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Header="Expected languages" Text="{x:Bind ViewModel.TranscriptionLanguages, Mode=TwoWay}" PlaceholderText="zh, en" />
+                        <TextBox Grid.Row="2" Header="Answer model (interview/defense)" Text="{x:Bind ViewModel.AnswerModel, Mode=TwoWay}" />
+                        <ComboBox Grid.Row="2" Grid.Column="1" Header="Answer reasoning effort" ItemsSource="{x:Bind ViewModel.EffortOptions}" SelectedItem="{x:Bind ViewModel.AnswerEffort, Mode=TwoWay}" HorizontalAlignment="Stretch" />
+                        <TextBox Grid.Row="3" Header="Insight model (meeting)" Text="{x:Bind ViewModel.InsightModel, Mode=TwoWay}" />
+                        <ComboBox Grid.Row="3" Grid.Column="1" Header="Insight reasoning effort" ItemsSource="{x:Bind ViewModel.EffortOptions}" SelectedItem="{x:Bind ViewModel.InsightEffort, Mode=TwoWay}" HorizontalAlignment="Stretch" />
+                        <TextBox Grid.Row="4" Header="Question detection model (AI intent check)" Text="{x:Bind ViewModel.IntentModel, Mode=TwoWay}" />
+                        <ComboBox Grid.Row="4" Grid.Column="1" Header="Question detection reasoning effort" ItemsSource="{x:Bind ViewModel.EffortOptions}" SelectedItem="{x:Bind ViewModel.IntentEffort, Mode=TwoWay}" HorizontalAlignment="Stretch" />
+                    </Grid>
+                    <ToggleSwitch Header="Fast mode for answers" IsOn="{x:Bind ViewModel.AnswerFastMode, Mode=TwoWay}"
+                                  OffContent="Off: standard processing"
+                                  OnContent="On: OpenAI Fast mode for answer requests — first text about 0.3–1 s sooner, about twice the price of those requests" />
+                </StackPanel>
+            </Border>
+
+            <!-- Appearance -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Appearance and overlay" Style="{StaticResource SectionHeaderStyle}" />
+                    <ComboBox Header="Theme" SelectedIndex="{x:Bind ViewModel.ThemeIndex, Mode=TwoWay}" MinWidth="220">
+                        <ComboBoxItem Content="Use system setting" />
+                        <ComboBoxItem Content="Light" />
+                        <ComboBoxItem Content="Dark" />
+                    </ComboBox>
+                    <ToggleSwitch Header="Floating overlay" IsOn="{x:Bind ViewModel.OverlayEnabled, Mode=TwoWay}" OnContent="Show answers and insights in a floating panel while another app is in front (hidden while this window is active)" OffContent="Off" />
+                    <ToggleSwitch Header="Keep overlay on top" IsOn="{x:Bind ViewModel.OverlayTopmost, Mode=TwoWay}" />
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <ComboBox Header="Default overlay position" SelectedIndex="{x:Bind ViewModel.PlacementIndex, Mode=TwoWay}" MinWidth="220">
+                            <ComboBoxItem Content="Top right" />
+                            <ComboBoxItem Content="Bottom right" />
+                            <ComboBoxItem Content="Top left" />
+                            <ComboBoxItem Content="Bottom left" />
+                        </ComboBox>
+                        <Button Content="Reset overlay position" VerticalAlignment="Bottom" Command="{x:Bind ViewModel.ResetOverlayPositionCommand}" />
+                    </StackPanel>
+                    <ToggleSwitch Header="Closing the main window" IsOn="{x:Bind ViewModel.CloseToTray, Mode=TwoWay}"
+                                  OffContent="Stops listening and exits" OnContent="Keeps the session in the notification area (tray)" />
+                </StackPanel>
+            </Border>
+
+            <!-- Privacy -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Privacy and data" Style="{StaticResource SectionHeaderStyle}" />
+                    <TextBlock TextWrapping="Wrap" Style="{StaticResource BodyTextBlockStyle}">
+                        <Run Text="• Listening starts only when you select Start. Enabled system audio and microphone audio are streamed to OpenAI for transcription." /><LineBreak />
+                        <Run Text="• Speaker labels use short audio windows (about 20 seconds, at most 60 seconds per source buffered in memory) and up to a few temporary voice snippets per speaker, uploaded to OpenAI. They are deleted on stop, reset and exit and never saved as voice profiles." /><LineBreak />
+                        <Run Text="• Recent transcript (about the last 2 minutes), the earlier questions of this session with your replies (the latest two in full, older ones abbreviated), relevant preparation notes and, in interview mode, your selected résumé are sent to the AI model." /><LineBreak />
+                        <Run Text="• Transcript, answers, speaker names and preparation notes stay in memory for this session only. No audio or transcript is written to disk. Diagnostic logs contain no audio, transcript or generated content." /><LineBreak />
+                        <Run Text="• Cloud processing follows your OpenAI account's data policies, which are separate from this app's local retention. Obtain consent from participants where required." />
+                    </TextBlock>
+                    <TextBlock x:Name="LogPathText" Style="{StaticResource CaptionMutedStyle}" IsTextSelectionEnabled="True" />
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="{x:Bind ViewModel.SaveStatus, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

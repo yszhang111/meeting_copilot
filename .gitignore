@@ -1,0 +1,14 @@
+﻿## Build output
+bin/
+obj/
+artifacts/
+publish/
+docs/
+*.user
+*.suo
+.vs/
+*.binlog
+TestResults/
+## Never commit local secrets or recordings
+*.env
+*.wav

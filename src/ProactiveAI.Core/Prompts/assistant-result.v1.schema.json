@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "response_kind": {
+      "type": "string",
+      "enum": ["answer", "insight", "clarification", "none"],
+      "description": "answer = full answer to a question; insight = brief meeting insight; clarification = a missing condition would materially change the answer; none = no intervention."
+    },
+    "should_notify": { "type": "boolean", "description": "True only when a new result should be presented to the user." },
+    "direct_position": { "type": ["string", "null"], "description": "Answer: 1-3 sentences that directly answer the exact question including every subquestion (max 600 characters). Null otherwise." },
+    "follows_up_on": { "type": ["string", "null"], "description": "question_id of the earlier question (from question_history, the session question log or related_exchanges) that the current question follows up on or refers back to; null for a new topic, when unsure, or without a current question." },
+    "spoken_answer": { "type": ["string", "null"], "description": "Answer: the complete answer in coherent spoken prose, paragraphs separated by blank lines. Main deliverable. Null otherwise." },
+    "filled_in_details": { "type": "array", "maxItems": 8, "items": { "type": "string" }, "description": "Each specific about the user's own work that you supplied as plausible typical practice because neither the preparation notes nor what the user said contain it (max 120 characters each). Empty when none." },
+    "question_id": { "type": ["string", "null"], "description": "Echo the provided question_id for answer/clarification, else null." },
+    "question_revision": { "type": ["integer", "null"], "description": "Echo the provided question revision for answer/clarification, else null." },
+    "title": { "type": ["string", "null"], "description": "Short headline (max 80 characters)." },
+    "suggestion": { "type": ["string", "null"], "description": "Insight/clarification: one or two sentences (max 300 characters). Null for answers." },
+    "suggested_question": { "type": ["string", "null"], "description": "Optional question the user could ask (max 200 characters)." },
+    "supporting_points": { "type": "array", "maxItems": 8, "items": { "type": "string" }, "description": "Key evidence, mechanisms, examples or trade-offs supporting the answer (each max 300 characters)." },
+    "assumptions_and_limits": { "type": "array", "maxItems": 6, "items": { "type": "string" }, "description": "Assumptions made, limitations, and what would change the conclusion (each max 300 characters)." },
+    "likely_followups": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "question": { "type": "string", "description": "A likely follow-up question (max 200 characters)." },
+          "response_direction": { "type": "string", "description": "Substantive direction for answering it (max 500 characters)." }
+        },
+        "required": ["question", "response_direction"]
+      }
+    },
+    "missing_facts": { "type": "array", "maxItems": 6, "items": { "type": "string" }, "description": "Only facts that must not be invented (measured results such as scores, percentages, latency or counts; employer, job title, degree, publication, award, citation) and that the answer would need. Usually empty." },
+    "question_text": { "type": ["string", "null"], "description": "The question being answered, as understood (max 1000 characters)." },
+    "question_segment_ids": { "type": "array", "maxItems": 40, "items": { "type": "string" }, "description": "Transcript segment ids containing the question." },
+    "category": {
+      "type": "string",
+      "enum": ["answer", "clarification", "risk", "alternative", "requirement", "fact_check", "follow_up", "none"]
+    },
+    "priority": { "type": "string", "enum": ["low", "normal", "high"] },
+    "evidence_segment_ids": { "type": "array", "maxItems": 40, "items": { "type": "string" }, "description": "Transcript segment ids the result relies on. Only ids present in the provided transcript data." },
+    "preparation_evidence_ids": { "type": "array", "maxItems": 40, "items": { "type": "string" }, "description": "Preparation note ids used. Only ids present in the provided preparation notes." },
+    "answer_language": { "type": ["string", "null"], "description": "Language code of the written result, e.g. zh or en." },
+    "decision_note": { "type": "string", "description": "Short label explaining the decision (max 200 characters). Not a reasoning trace." }
+  },
+  "required": [
+    "response_kind", "should_notify", "direct_position", "follows_up_on", "spoken_answer", "filled_in_details", "question_id", "question_revision", "title",
+    "suggestion", "suggested_question", "supporting_points", "assumptions_and_limits", "likely_followups", "missing_facts",
+    "question_text", "question_segment_ids", "category", "priority", "evidence_segment_ids", "preparation_evidence_ids",
+    "answer_language", "decision_note"
+  ]
+}

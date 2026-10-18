@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="ProactiveAI.Desktop.Views.SetupView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ProactiveAI.Desktop.Views">
+
+    <ScrollViewer>
+        <StackPanel Padding="32,16,32,24" Spacing="16" MaxWidth="860" HorizontalAlignment="Stretch">
+            <Grid>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="New session" Style="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock Style="{StaticResource CaptionMutedStyle}" FontSize="14"
+                               Text="Check your devices before you start. Nothing is recorded or uploaded during the check." />
+                </StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Top" Command="{x:Bind ViewModel.BackCommand}" AutomationProperties.Name="Back to Home">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE72B;" FontSize="14" /><TextBlock Text="Back" /></StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- 1. Scenario -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="1. Scenario" Style="{StaticResource SectionHeaderStyle}" />
+                    <ComboBox SelectedIndex="{x:Bind ViewModel.Live.ScenarioIndex, Mode=TwoWay}" MinWidth="220" AutomationProperties.Name="Scenario">
+                        <ComboBoxItem Content="Meeting — occasional insights" />
+                        <ComboBoxItem Content="Interview — full answers to questions" />
+                        <ComboBoxItem Content="Defense — full answers to examiner questions" />
+                    </ComboBox>
+                    <TextBlock Style="{StaticResource CaptionMutedStyle}" Text="Preparation notes (your role, project facts, results) can be added on the session page under Preparation." />
+                </StackPanel>
+            </Border>
+
+            <!-- Résumé (interview mode) -->
+            <Border Style="{StaticResource CardBorderStyle}" Visibility="{x:Bind ViewModel.Live.InterviewVisibility, Mode=OneWay}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Résumé for this interview" Style="{StaticResource SectionHeaderStyle}" />
+                    <local:ResumePickerView />
+                </StackPanel>
+            </Border>
+
+            <!-- 2. Microphone -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="10">
+                    <Grid>
+                        <TextBlock Text="2. Microphone" Style="{StaticResource SectionHeaderStyle}" VerticalAlignment="Center" />
+                        <ToggleSwitch HorizontalAlignment="Right" MinWidth="0" OnContent="On" OffContent="Off"
+                                      IsOn="{x:Bind ViewModel.Live.MicrophoneEnabled, Mode=TwoWay}" AutomationProperties.Name="Use the microphone" />
+                    </Grid>
+                    <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.MicSectionVisibility, Mode=OneWay}">
+                        <ComboBox Header="Microphone" ItemsSource="{x:Bind ViewModel.Settings.MicrophoneDevices}"
+                                  SelectedItem="{x:Bind ViewModel.Settings.SelectedMicrophone, Mode=TwoWay}" HorizontalAlignment="Stretch" />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <FontIcon Glyph="&#xE720;" FontSize="14" />
+                            <ProgressBar Width="320" Height="8" Value="{x:Bind ViewModel.MicLevel, Mode=OneWay}" VerticalAlignment="Center"
+                                         AutomationProperties.Name="Microphone level" />
+                        </StackPanel>
+                        <InfoBar IsOpen="True" IsClosable="False" Severity="{x:Bind ViewModel.MicSeverity, Mode=OneWay}" Message="{x:Bind ViewModel.MicStatusText, Mode=OneWay}" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource CaptionMutedStyle}" Visibility="{x:Bind local:Ui.Collapsed(ViewModel.Live.MicrophoneEnabled), Mode=OneWay}"
+                               Text="The microphone is off: only system audio will be transcribed." />
+                </StackPanel>
+            </Border>
+
+            <!-- 3. Speakers / system audio -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="10">
+                    <Grid>
+                        <TextBlock Text="3. Speakers and system audio" Style="{StaticResource SectionHeaderStyle}" VerticalAlignment="Center" />
+                        <ToggleSwitch HorizontalAlignment="Right" MinWidth="0" OnContent="On" OffContent="Off"
+                                      IsOn="{x:Bind ViewModel.Live.SystemEnabled, Mode=TwoWay}" AutomationProperties.Name="Capture system audio" />
+                    </Grid>
+                    <ComboBox Header="Playback device (where you hear the other participants)" ItemsSource="{x:Bind ViewModel.Settings.PlaybackDevices}"
+                              SelectedItem="{x:Bind ViewModel.Settings.SelectedPlayback, Mode=TwoWay}" HorizontalAlignment="Stretch" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Command="{x:Bind ViewModel.TestSpeakersCommand}" IsEnabled="{x:Bind ViewModel.CanTestSpeakers, Mode=OneWay}" AutomationProperties.Name="Play test sound">
+                            <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE767;" FontSize="14" /><TextBlock Text="Play test sound" /></StackPanel>
+                        </Button>
+                        <FontIcon Glyph="&#xE7F5;" FontSize="14" VerticalAlignment="Center" />
+                        <ProgressBar Width="220" Height="8" Value="{x:Bind ViewModel.SystemLevel, Mode=OneWay}" VerticalAlignment="Center"
+                                     AutomationProperties.Name="Captured system audio level" ToolTipService.ToolTip="What the app captures from this playback device" />
+                    </StackPanel>
+                    <InfoBar IsOpen="True" IsClosable="False" Severity="{x:Bind ViewModel.SpeakerSeverity, Mode=OneWay}" Message="{x:Bind ViewModel.SpeakerStatusText, Mode=OneWay}" />
+                    <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Visibility="{x:Bind ViewModel.EchoHintVisibility, Mode=OneWay}"
+                             Message="{x:Bind ViewModel.EchoHint, Mode=OneWay}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Start -->
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{x:Bind ViewModel.StartHint, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" VerticalAlignment="Center" FontSize="13" />
+                <Button Grid.Column="1" Style="{StaticResource AccentButtonStyle}" Command="{x:Bind ViewModel.StartCommand}" IsEnabled="{x:Bind ViewModel.CanStart, Mode=OneWay}"
+                        Padding="20,8" AutomationProperties.Name="Start session">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE768;" FontSize="14" /><TextBlock Text="Start session" /></StackPanel>
+                </Button>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

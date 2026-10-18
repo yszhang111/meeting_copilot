@@ -1,0 +1,104 @@
+{
+  "histories": {
+    "cache2": [
+      { "q": "先介绍一下你最近做的项目吧。", "said": "我负责电商订单系统的缓存改造，用 Redis 做二级缓存，下单接口 P99 从 800 毫秒降到了 120 毫秒。" },
+      { "q": "为什么选 Redis，不直接用本地缓存？", "said": "线上有 40 个实例，本地缓存的一致性很难保证，所以本地只放少量热点商品。", "follows": "q-1" }
+    ],
+    "cache3ms": [
+      { "q": "先介绍一下你最近做的项目吧。", "said": "我负责电商订单系统的缓存改造，用 Redis 做二级缓存，下单接口 P99 从 800 毫秒降到了 120 毫秒。" },
+      { "q": "为什么选 Redis，不直接用本地缓存？", "said": "线上有 40 个实例，本地缓存的一致性很难保证，所以本地只放少量热点商品。", "follows": "q-1" },
+      { "q": "你怎么理解微服务的拆分粒度？", "said": "我觉得按业务能力和团队边界拆，拆得太细会让调用链和运维成本变高。" }
+    ],
+    "cache5": [
+      { "q": "先介绍一下你最近做的项目吧。", "said": "我负责电商订单系统的缓存改造，用 Redis 做二级缓存，下单接口 P99 从 800 毫秒降到了 120 毫秒。" },
+      { "q": "为什么选 Redis，不直接用本地缓存？", "said": "线上有 40 个实例，本地缓存的一致性很难保证，所以本地只放少量热点商品。", "follows": "q-1" },
+      { "q": "你怎么理解微服务的拆分粒度？", "said": "我觉得按业务能力和团队边界拆，拆得太细会让调用链和运维成本变高。" },
+      { "q": "你平时是怎么做 code review 的？", "said": "先看设计和接口，再看边界条件和测试，小问题直接在评论里给建议。" },
+      { "q": "讲讲你遇到过最难排查的一次线上故障。", "said": "有一次连接池泄漏导致接口大面积超时，最后通过线程 dump 定位到一个没关闭的连接。" }
+    ],
+    "cache4chain": [
+      { "q": "先介绍一下你最近做的项目吧。", "said": "我负责电商订单系统的缓存改造，用 Redis 做二级缓存，下单接口 P99 从 800 毫秒降到了 120 毫秒。" },
+      { "q": "为什么选 Redis，不直接用本地缓存？", "said": "线上有 40 个实例，本地缓存的一致性很难保证，所以本地只放少量热点商品。", "follows": "q-1" },
+      { "q": "那 Redis 和数据库的一致性你们怎么保证？", "said": "先更新数据库再删缓存，删除失败的话通过消息队列重试。", "follows": "q-2" },
+      { "q": "如果消息队列也出问题了呢？", "said": "我们给缓存设了 10 分钟过期时间兜底，最坏情况下最多不一致 10 分钟。", "follows": "q-3" }
+    ],
+    "fraud2": [
+      { "q": "Tell me about a project you're proud of.", "said": "I built a real-time fraud detection pipeline with Kafka and Flink that cut false positives by 30 percent." },
+      { "q": "How did you measure that 30 percent?", "said": "We ran an A/B test on two weeks of production traffic and compared analyst-confirmed fraud cases.", "follows": "q-1" }
+    ],
+    "fraud4": [
+      { "q": "Tell me about a project you're proud of.", "said": "I built a real-time fraud detection pipeline with Kafka and Flink that cut false positives by 30 percent." },
+      { "q": "How did you measure that 30 percent?", "said": "We ran an A/B test on two weeks of production traffic and compared analyst-confirmed fraud cases.", "follows": "q-1" },
+      { "q": "Tell me about a time you failed.", "said": "I underestimated a database migration and we missed a release deadline by a week." },
+      { "q": "How do you keep up with new technologies?", "said": "I read papers, watch conference talks and build small prototypes on weekends." }
+    ],
+    "resume4": [
+      { "q": "Walk me through your resume.", "said": "Five years of backend work, the last two at a fintech company building payment processing." },
+      { "q": "Why payments?", "said": "I like problems where correctness really matters and every bug costs money.", "follows": "q-1" },
+      { "q": "Let's do some design. How would you build a rate limiter?", "said": "A token bucket per user stored in Redis, refilled lazily on each request." },
+      { "q": "How would you scale it globally?", "said": "Regional buckets with asynchronous synchronization and a small global budget.", "follows": "q-3" }
+    ],
+    "thesis2": [
+      { "q": "请简单介绍一下你论文的研究问题。", "said": "我研究的是小样本条件下的医学图像分割，提出了一种基于原型对齐的方法。" },
+      { "q": "介绍一下你的实验设置。", "said": "在三个公开数据集上做五折交叉验证，基线是 U-Net 和 PANet。", "follows": "q-1" }
+    ],
+    "thesis4": [
+      { "q": "请简单介绍一下你论文的研究问题。", "said": "我研究的是小样本条件下的医学图像分割，提出了一种基于原型对齐的方法。" },
+      { "q": "介绍一下你的实验设置。", "said": "在三个公开数据集上做五折交叉验证，基线是 U-Net 和 PANet。", "follows": "q-1" },
+      { "q": "你的方法有什么局限？", "said": "对特别小的器官效果一般，而且对图像质量比较敏感。" },
+      { "q": "这项工作对临床有什么意义？", "said": "可以大幅减少医生的标注工作量。" }
+    ]
+  },
+  "cases": [
+    { "id": "zh-immediate-redis-down", "lang": "zh", "category": "immediate", "base": "cache2", "current": "那 Redis 挂了怎么办？", "expect": "q-2" },
+    { "id": "zh-immediate-your-part", "lang": "zh", "category": "immediate", "history": [{ "q": "先介绍一下你最近做的项目吧。", "said": "我负责电商订单系统的缓存改造，用 Redis 做二级缓存，下单接口 P99 从 800 毫秒降到了 120 毫秒。" }], "current": "能具体说说你在里面负责哪一块吗？", "expect": "q-1" },
+    { "id": "zh-immediate-too-fine", "lang": "zh", "category": "immediate", "base": "cache3ms", "current": "拆得太细具体会带来哪些问题？举个例子。", "expect": "q-3" },
+    { "id": "zh-immediate-why-bplus", "lang": "zh", "category": "immediate", "history": [{ "q": "讲讲你对数据库索引的理解。", "said": "索引一般用 B+ 树实现，叶子节点存数据并且用链表串起来，适合范围查询。" }], "current": "为什么是 B+ 树而不是 B 树？", "expect": "q-1" },
+    { "id": "en-immediate-measure", "lang": "en", "category": "immediate", "history": [{ "q": "Tell me about a project you're proud of.", "said": "I built a real-time fraud detection pipeline with Kafka and Flink that cut false positives by 30 percent." }], "current": "How did you measure that 30 percent?", "expect": "q-1" },
+    { "id": "en-immediate-communicate", "lang": "en", "category": "immediate", "history": [{ "q": "What's the difference between a process and a thread?", "said": "Processes have separate address spaces; threads share memory inside one process." }], "current": "And how do they communicate with each other?", "expect": "q-1" },
+
+    { "id": "zh-deepen-partitions", "lang": "zh", "category": "implicit-deepening", "history": [{ "q": "讲讲你们的消息队列是怎么用的。", "said": "我们用 Kafka 做订单事件分发，三个分区，消费者组按服务划分。" }], "current": "分区数是怎么定的？后面扩容过吗？", "expect": "q-1" },
+    { "id": "zh-deepen-token-bucket", "lang": "zh", "category": "implicit-deepening", "history": [{ "q": "你们的服务是怎么做限流的？", "said": "网关层用令牌桶，单机 QPS 上限 2000。" }], "current": "令牌桶和漏桶的区别是什么？", "expect": "q-1" },
+    { "id": "en-deepen-migration", "lang": "en", "category": "implicit-deepening", "history": [{ "q": "How do you handle database migrations in production?", "said": "We use expand-and-contract migrations behind feature flags." }], "current": "Walk me through a migration that went wrong.", "expect": "q-1" },
+    { "id": "zh-deepen-prototype-defense", "lang": "zh", "category": "implicit-deepening", "scenario": "Defense", "history": [{ "q": "请简单介绍一下你论文的研究问题。", "said": "我研究的是小样本条件下的医学图像分割，提出了一种基于原型对齐的方法。" }], "current": "你说的原型对齐，和已有的原型网络有什么本质区别？", "expect": "q-1" },
+    { "id": "en-deepen-cap-example", "lang": "en", "category": "implicit-deepening", "history": [{ "q": "Explain the CAP theorem.", "said": "Under a network partition a distributed system has to choose between consistency and availability." }], "current": "Can you give a real system that chooses availability?", "expect": "q-1" },
+
+    { "id": "zh-chain-10min", "lang": "zh", "category": "chain", "base": "cache4chain", "current": "10 分钟不一致，对订单业务能接受吗？", "expect": "q-4", "accept": ["q-3"] },
+    { "id": "en-chain-coordinator", "lang": "en", "category": "chain", "history": [{ "q": "Design a URL shortener.", "said": "Base62 IDs from a counter, a cache for hot links and 301 redirects." }, { "q": "How do you generate unique IDs across servers?", "said": "Range allocation from a coordinator; each server takes a block of a thousand IDs.", "follows": "q-1" }], "current": "What happens if the coordinator goes down?", "expect": "q-2" },
+    { "id": "zh-chain-cv-split-defense", "lang": "zh", "category": "chain", "scenario": "Defense", "base": "thesis2", "current": "五折交叉验证是按病人划分还是按切片划分的？", "expect": "q-2" },
+    { "id": "en-chain-prototype-worth", "lang": "en", "category": "chain", "history": [{ "q": "Tell me about a conflict with a teammate.", "said": "We disagreed on whether to rewrite a legacy service; I proposed a strangler pattern instead." }, { "q": "How did you convince them?", "said": "I built a small prototype and showed them the latency numbers.", "follows": "q-1" }], "current": "Looking back, was the prototype worth the time?", "expect": "q-2", "accept": ["q-1"] },
+    { "id": "zh-chain-pick-ancestor", "lang": "zh", "category": "chain", "history": [{ "q": "先介绍一下你最近做的项目吧。", "said": "我负责电商订单系统的缓存改造，用 Redis 做二级缓存，下单接口 P99 从 800 毫秒降到了 120 毫秒。" }, { "q": "为什么选 Redis，不直接用本地缓存？", "said": "线上有 40 个实例，本地缓存的一致性很难保证。", "follows": "q-1" }, { "q": "Redis 集群用的什么模式？", "said": "Redis Cluster，六主六从。", "follows": "q-2" }], "current": "这个项目团队一共几个人？你在里面是什么角色？", "expect": "q-1" },
+    { "id": "en-chain-do-differently", "lang": "en", "category": "chain", "base": "fraud2", "current": "If you started that project over, what would you do differently?", "expect": "q-1", "accept": ["q-2"] },
+
+    { "id": "zh-switch-marked-career", "lang": "zh", "category": "switch-marked", "base": "cache3ms", "current": "好，我们换个话题。说说你的职业规划，未来三年想做什么？", "expect": null },
+    { "id": "zh-switch-marked-leave", "lang": "zh", "category": "switch-marked", "base": "cache2", "current": "技术问题就问到这。你为什么想离开现在的公司？", "expect": null },
+    { "id": "en-switch-marked-failure", "lang": "en", "category": "switch-marked", "base": "fraud2", "current": "Okay, switching gears. Tell me about a time you failed.", "expect": null },
+    { "id": "en-switch-marked-priorities", "lang": "en", "category": "switch-marked", "history": [{ "q": "Explain how HTTPS works.", "said": "A TLS handshake verifies the server certificate and agrees on symmetric session keys." }], "current": "Alright, different topic. How do you prioritize when three urgent tasks land at once?", "expect": null },
+    { "id": "zh-switch-marked-writing-defense", "lang": "zh", "category": "switch-marked", "scenario": "Defense", "base": "thesis2", "current": "方法部分我没有问题了。我们聊聊写作，你的相关工作综述是怎么组织的？", "expect": null },
+
+    { "id": "zh-switch-code-review", "lang": "zh", "category": "switch-unmarked", "base": "cache3ms", "current": "你平时是怎么做 code review 的？", "expect": null },
+    { "id": "zh-switch-incident", "lang": "zh", "category": "switch-unmarked", "base": "cache2", "current": "讲讲你遇到过最难排查的一次线上故障。", "expect": null },
+    { "id": "zh-switch-tcp", "lang": "zh", "category": "switch-unmarked", "history": [{ "q": "讲讲你对数据库索引的理解。", "said": "索引一般用 B+ 树实现，叶子节点存数据并且用链表串起来，适合范围查询。" }], "current": "TCP 三次握手为什么不能是两次？", "expect": null },
+    { "id": "zh-switch-overtime-after-chain", "lang": "zh", "category": "switch-unmarked", "base": "cache4chain", "current": "你怎么看待加班？", "expect": null },
+    { "id": "en-switch-kubernetes", "lang": "en", "category": "switch-unmarked", "history": [{ "q": "What's the difference between a process and a thread?", "said": "Processes have separate address spaces; threads share memory inside one process." }], "current": "What's your experience with Kubernetes?", "expect": null },
+    { "id": "en-switch-keep-up", "lang": "en", "category": "switch-unmarked", "base": "fraud2", "current": "How do you keep up with new technologies?", "expect": null },
+
+    { "id": "zh-overlap-browser-cache", "lang": "zh", "category": "switch-overlap", "history": [{ "q": "你们的缓存是怎么设计的？", "said": "Redis 主从加哨兵，热点数据再放一层本地缓存。" }], "current": "换个基础题：浏览器的强缓存和协商缓存有什么区别？", "expect": null },
+    { "id": "en-overlap-relational", "lang": "en", "category": "switch-overlap", "history": [{ "q": "Why did you choose Kafka for the order events?", "said": "A durable log with replay, and partitions give us per-order ordering." }], "current": "In general, when would you pick a relational database over a document store?", "expect": null },
+
+    { "id": "zh-backref-first-project", "lang": "zh", "category": "backref-far", "base": "cache5", "current": "回到你一开始说的那个缓存改造，P99 是怎么测出来的？", "expect": "q-1" },
+    { "id": "zh-backref-instances", "lang": "zh", "category": "backref-far", "base": "cache5", "current": "你前面说线上有 40 个实例，那你们发布是怎么做的，有灰度吗？", "expect": "q-2", "accept": ["q-1"] },
+    { "id": "en-backref-late-events", "lang": "en", "category": "backref-far", "base": "fraud4", "current": "Going back to the fraud pipeline, how did you handle late-arriving events?", "expect": "q-1", "accept": ["q-2"] },
+    { "id": "zh-backref-baseline-defense", "lang": "zh", "category": "backref-far", "scenario": "Defense", "base": "thesis4", "current": "我再回到实验部分，你的基线为什么没有包含最新的 SAM 类方法？", "expect": "q-2" },
+    { "id": "en-backref-fintech", "lang": "en", "category": "backref-far", "base": "resume4", "current": "Earlier you mentioned the fintech job. What was the hardest correctness bug you hit there?", "expect": "q-1", "accept": ["q-2"] },
+
+    { "id": "zh-reply-thread-dump", "lang": "zh", "category": "reply-pickup", "history": [{ "q": "讲讲你遇到过最难排查的一次线上故障。", "said": "有一次连接池泄漏导致接口大面积超时，最后通过线程 dump 定位到一个没关闭的连接。" }], "current": "你刚才说线程 dump，具体是怎么看出连接没关的？", "expect": "q-1" },
+    { "id": "en-reply-runbooks", "lang": "en", "category": "reply-pickup", "history": [{ "q": "How do you handle on-call?", "said": "We have a weekly rotation and runbooks for the top twenty alerts." }], "current": "You said runbooks. Who keeps them up to date?", "expect": "q-1" },
+
+    { "id": "zh-rephrase-weakness", "lang": "zh", "category": "rephrase", "history": [{ "q": "你觉得你最大的缺点是什么？", "said": "我有时候太追求细节。" }], "current": "我换个问法，你在团队里最常收到的负面反馈是什么？", "expect": "q-1" },
+    { "id": "en-rephrase-why-us", "lang": "en", "category": "rephrase", "history": [{ "q": "Why do you want to join us?", "said": "Your product is used by millions of people and I want to work at that scale." }], "current": "Okay, but what specifically about our team, not just the scale?", "expect": "q-1" },
+
+    { "id": "zh-first-intro", "lang": "zh", "category": "first", "current": "先做个自我介绍吧。", "expect": null },
+    { "id": "en-first-background", "lang": "en", "category": "first", "current": "Can you start by walking me through your background?", "expect": null }
+  ]
+}
