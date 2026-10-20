@@ -9,6 +9,6 @@
     <InvariantGlobalization>false</InvariantGlobalization>
     <Company>Meeting Copilot</Company>
     <Product>Meeting Copilot</Product>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
   </PropertyGroup>
 </Project>
