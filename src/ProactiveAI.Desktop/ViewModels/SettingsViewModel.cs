@@ -15,6 +15,23 @@ public sealed record DeviceOption(string? Id, string Name)
     public override string ToString() => Name;
 }
 
+public enum ApiKeySaveOutcome
+{
+    /// <summary>Not stored: the text does not look like an API key.</summary>
+    Invalid,
+
+    /// <summary>Not stored: OpenAI rejected the key.</summary>
+    Rejected,
+
+    /// <summary>Stored and accepted by OpenAI.</summary>
+    Saved,
+
+    /// <summary>Stored, but the check found a problem other than an invalid key (no connection, model not available).</summary>
+    SavedWithWarning,
+}
+
+public sealed record ApiKeySaveResult(ApiKeySaveOutcome Outcome, string Message);
+
 public sealed partial class SettingsViewModel : ObservableObject
 {
     private readonly SessionCoordinator _session;
@@ -182,7 +199,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public void SaveApiKey(string key)
     {
         key = key.Trim();
-        if (key.Length < 20 || key.Contains(' '))
+        if (!LooksLikeApiKey(key))
         {
             ApiKeyStatus = "That does not look like an OpenAI API key. Nothing was stored.";
             return;
@@ -191,6 +208,47 @@ public sealed partial class SettingsViewModel : ObservableObject
         RefreshKeyState();
         ConnectionTestResult = string.Empty;
     }
+
+    /// <summary>
+    /// Used by the first-start prompt: stores the key, then asks OpenAI once whether it is accepted (the answer model
+    /// must be visible to it). A key OpenAI rejects is removed again and any previous key restored.
+    /// </summary>
+    public async Task<ApiKeySaveResult> SaveAndVerifyApiKeyAsync(string key, CancellationToken cancellationToken)
+    {
+        key = key.Trim();
+        if (!LooksLikeApiKey(key))
+        {
+            return new(ApiKeySaveOutcome.Invalid, "That does not look like an OpenAI API key. Paste the whole key (it starts with \"sk-\").");
+        }
+        string? previous = _credentials.ReadApiKey();
+        _credentials.WriteApiKey(key);
+        string model = _session.Settings.AnswerModel;
+        var check = await Task.Run(() => _checker.CheckAsync(model, cancellationToken), cancellationToken);
+        if (check.Failure == ProviderFailureKind.Authentication)
+        {
+            if (string.IsNullOrWhiteSpace(previous))
+            {
+                _credentials.DeleteApiKey();
+            }
+            else
+            {
+                _credentials.WriteApiKey(previous);
+            }
+            RefreshKeyState();
+            return new(ApiKeySaveOutcome.Rejected, "OpenAI did not accept this key. Check that you copied the whole key and that it has not been revoked.");
+        }
+        RefreshKeyState();
+        ConnectionTestResult = string.Empty;
+        return check.Failure switch
+        {
+            ProviderFailureKind.None when check.Accessible => new(ApiKeySaveOutcome.Saved, "Key saved."),
+            ProviderFailureKind.Network or ProviderFailureKind.Cancelled or ProviderFailureKind.ServerError =>
+                new(ApiKeySaveOutcome.SavedWithWarning, "Key saved, but it could not be checked right now (no connection to OpenAI). It is checked again when you start a session."),
+            _ => new(ApiKeySaveOutcome.SavedWithWarning, $"Key saved, but OpenAI reported a problem with model {model}: {check.Detail} You can check all models in Settings > Test models."),
+        };
+    }
+
+    private static bool LooksLikeApiKey(string key) => key.Length >= 20 && !key.Any(char.IsWhiteSpace);
 
     [RelayCommand]
     private void DeleteApiKey()
@@ -252,7 +310,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     partial void OnAnswerFastModeChanged(bool value) => Save(s => s with { AnswerFastMode = value });
     partial void OnSaveSessionHistoryChanged(bool value) => Save(s => s with { SaveSessionHistory = value });
 
-    public string HistoryLocation => "Stored on this PC in " + Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ProactiveAI", "sessions")
+    public string HistoryLocation => "Stored on this PC in " + Path.Combine(Infrastructure.Settings.AppDataLocation.Default, "sessions")
                                      + ", encrypted with Windows data protection so only your Windows account can read it.";
 
     /// <summary>Raised after all saved sessions were deleted (the Home list refreshes).</summary>

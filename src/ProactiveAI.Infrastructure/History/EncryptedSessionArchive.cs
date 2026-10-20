@@ -35,8 +35,7 @@ public sealed partial class EncryptedSessionArchive : ISessionArchive
         _log = log;
     }
 
-    public static string DefaultDirectory =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ProactiveAI", "sessions");
+    public static string DefaultDirectory => Path.Combine(Settings.AppDataLocation.Default, "sessions");
 
     public string Directory => _dir;
 

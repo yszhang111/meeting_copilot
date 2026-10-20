@@ -77,7 +77,7 @@ public sealed class OpenAIConnection
     {
         var req = new HttpRequestMessage(method, relativeUrl);
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", RequireKey());
-        req.Headers.UserAgent.ParseAdd("ProactiveAI/0.1");
+        req.Headers.UserAgent.ParseAdd("MeetingCopilot/0.1");
         return req;
     }
 

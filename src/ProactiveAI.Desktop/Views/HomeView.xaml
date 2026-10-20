@@ -14,7 +14,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Spacing="4">
-            <TextBlock Text="Welcome to Proactive AI" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="Welcome to Meeting Copilot" Style="{StaticResource TitleTextBlockStyle}" />
             <TextBlock Style="{StaticResource CaptionMutedStyle}" FontSize="14"
                        Text="Start a new session, or open a previous one to review what was said and the answers you got." />
         </StackPanel>

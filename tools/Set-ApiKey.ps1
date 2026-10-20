@@ -1,11 +1,12 @@
 <#
 .SYNOPSIS
-  Stores (or removes) the OpenAI API key in Windows Credential Manager for Proactive AI.
+  Stores (or removes) the OpenAI API key in Windows Credential Manager for Meeting Copilot.
 .DESCRIPTION
   The key is read with a masked prompt and written as a generic credential
-  "ProactiveAI/OpenAI-API-Key" (DPAPI-protected per user). It is never printed,
+  "MeetingCopilot/OpenAI-API-Key" (DPAPI-protected per user). It is never printed,
   written to a file, or placed in command history. The app's Settings page offers
-  the same replace/delete controls.
+  the same replace/delete controls. -Remove also deletes the entry used while the
+  app was called Proactive AI ("ProactiveAI/OpenAI-API-Key").
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File tools\Set-ApiKey.ps1
 .EXAMPLE
@@ -14,7 +15,8 @@
 param([switch]$Remove)
 
 $ErrorActionPreference = 'Stop'
-$target = 'ProactiveAI/OpenAI-API-Key'
+$target = 'MeetingCopilot/OpenAI-API-Key'
+$legacyTarget = 'ProactiveAI/OpenAI-API-Key'
 
 Add-Type -TypeDefinition @'
 using System;
@@ -34,14 +36,16 @@ public static class PaiCred {
   public static void Write(string target, IntPtr bstr, int chars) {
     int bytes = chars * 2;
     var c = new CREDENTIAL { Type = 1, TargetName = target, CredentialBlobSize = (uint)bytes, CredentialBlob = bstr,
-      Persist = 2, UserName = "openai-api-key", Comment = "Proactive AI OpenAI API key" };
+      Persist = 2, UserName = "openai-api-key", Comment = "Meeting Copilot OpenAI API key" };
     if (!CredWrite(ref c, 0)) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
   }
 }
 '@
 
 if ($Remove) {
-  if ([PaiCred]::CredDelete($target, 1, 0)) { Write-Host 'API key removed.' } else { Write-Host 'No stored API key found.' }
+  $removed = [PaiCred]::CredDelete($target, 1, 0)
+  $removedLegacy = [PaiCred]::CredDelete($legacyTarget, 1, 0)
+  if ($removed -or $removedLegacy) { Write-Host 'API key removed.' } else { Write-Host 'No stored API key found.' }
   return
 }
 

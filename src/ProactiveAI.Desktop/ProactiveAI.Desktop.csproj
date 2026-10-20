@@ -6,7 +6,7 @@
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <RootNamespace>ProactiveAI.Desktop</RootNamespace>
-    <AssemblyName>ProactiveAI</AssemblyName>
+    <AssemblyName>MeetingCopilot</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <Platforms>x64</Platforms>
@@ -20,7 +20,7 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Product>Proactive AI</Product>
+    <Product>Meeting Copilot</Product>
   </PropertyGroup>
 
   <ItemGroup>

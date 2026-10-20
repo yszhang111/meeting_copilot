@@ -5,7 +5,7 @@ using ProactiveAI.Core.Settings;
 
 namespace ProactiveAI.Infrastructure.Settings;
 
-/// <summary>Persists non-sensitive settings as JSON under %LOCALAPPDATA%\ProactiveAI.</summary>
+/// <summary>Persists non-sensitive settings as JSON under %LOCALAPPDATA%\MeetingCopilot.</summary>
 public sealed class JsonSettingsStore : ISettingsStore
 {
     private static readonly JsonSerializerOptions Options = new()
@@ -26,8 +26,7 @@ public sealed class JsonSettingsStore : ISettingsStore
         _log = log;
     }
 
-    public static string DefaultDirectory =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ProactiveAI");
+    public static string DefaultDirectory => AppDataLocation.Default;
 
     public AppSettings Load()
     {

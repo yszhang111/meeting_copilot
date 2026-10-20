@@ -178,7 +178,7 @@ public sealed partial class OverlayWindow : Window
             showAnswer = showInsight = false;
         }
 
-        HeaderText.Text = $"Proactive AI · {_vm.StateText}";
+        HeaderText.Text = $"Meeting Copilot · {_vm.StateText}";
         NewerButton.Visibility = _vm.NewerAnswerAvailable ? Visibility.Visible : Visibility.Collapsed;
         if (showInsight)
         {

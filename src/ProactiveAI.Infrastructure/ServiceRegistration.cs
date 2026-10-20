@@ -24,8 +24,18 @@ public static class ServiceRegistration
     /// <summary>Registers the production services shared by the desktop app and the verification tool.</summary>
     public static IServiceCollection AddProactiveAI(this IServiceCollection services, string? dataDirectory = null)
     {
+        // The default location moved from %LOCALAPPDATA%\ProactiveAI when the app was renamed to Meeting Copilot; move
+        // existing data before anything (including the log file) is created there.
+        bool defaultLocation = dataDirectory is null;
+        var moved = defaultLocation ? AppDataLocation.MoveLegacyData(AppDataLocation.Legacy, AppDataLocation.Default) : LegacyDataMove.None;
         string dir = dataDirectory ?? JsonSettingsStore.DefaultDirectory;
         var fileLogger = new BoundedFileLoggerProvider(Path.Combine(dir, "logs"));
+        if (moved.AnythingFound)
+        {
+            fileLogger.CreateLogger("AppData").LogInformation(
+                "Data moved from the former Proactive AI folder: moved={Moved} keptExisting={Kept} failed={Failed}",
+                moved.Moved, moved.Kept, moved.Failed);
+        }
         services.AddLogging(b =>
         {
             b.SetMinimumLevel(LogLevel.Information);
@@ -35,7 +45,26 @@ public static class ServiceRegistration
         services.AddSingleton(fileLogger);
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ISettingsStore>(sp => new JsonSettingsStore(dir, sp.GetRequiredService<ILogger<JsonSettingsStore>>()));
-        services.AddSingleton<ICredentialStore, WindowsCredentialStore>();
+        services.AddSingleton<ICredentialStore>(sp =>
+        {
+            var store = new WindowsCredentialStore();
+            if (defaultLocation)
+            {
+                var log = sp.GetRequiredService<ILoggerFactory>().CreateLogger("AppData");
+                try
+                {
+                    if (store.MoveFrom(WindowsCredentialStore.LegacyTarget))
+                    {
+                        log.LogInformation("API key moved to the Meeting Copilot entry in Credential Manager");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    log.LogWarning("API key could not be moved from the former entry ({Type})", ex.GetType().Name);
+                }
+            }
+            return store;
+        });
         services.AddSingleton<ITokenCounter, TiktokenTokenCounter>();
         services.AddSingleton(sp => new OpenAIConnection(sp.GetRequiredService<ICredentialStore>()) { SafetyIdentifier = InstallIdentifier(dir) });
         services.AddSingleton<ITranscriptionProvider, RealtimeTranscriptionProvider>();

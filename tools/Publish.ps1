@@ -14,9 +14,9 @@ $root = Resolve-Path (Join-Path $PSScriptRoot '..')
 $version = ([xml](Get-Content (Join-Path $root 'Directory.Build.props'))).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
 if (-not $version) { throw 'Version not found in Directory.Build.props' }
 $artifacts = Join-Path $root 'artifacts'
-$out = Join-Path $artifacts "publish\ProactiveAI-$version-win-x64"
-$zip = Join-Path $artifacts "ProactiveAI-$version-win-x64.zip"
-$setup = Join-Path $artifacts "ProactiveAI-$version-win-x64-setup.exe"
+$out = Join-Path $artifacts "publish\MeetingCopilot-$version-win-x64"
+$zip = Join-Path $artifacts "MeetingCopilot-$version-win-x64.zip"
+$setup = Join-Path $artifacts "MeetingCopilot-$version-win-x64-setup.exe"
 if (Test-Path $out) { Remove-Item $out -Recurse -Force }
 if (Test-Path $zip) { Remove-Item $zip -Force }
 if (Test-Path $setup) { Remove-Item $setup -Force }

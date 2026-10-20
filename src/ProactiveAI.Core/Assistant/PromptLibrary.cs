@@ -9,7 +9,7 @@ public static class PromptLibrary
     // 1.2: session-long question memory (session_log, related_exchanges) and follows_up_on after direct_position.
     // 1.3: speakable answers about the user's own work; supplied details listed in filled_in_details (user decision 2026-10-17).
     // 1.4: the user's résumé (interview mode) as facts about the user.
-    public const string Version = "assistant-v1.4";
+    public const string Version = "assistant-v1.5";
     public const string SchemaName = "assistant_result_v1";
 
     private static readonly Lazy<string> InstructionsTemplate = new(() => Load("assistant-instructions.v1.md"));

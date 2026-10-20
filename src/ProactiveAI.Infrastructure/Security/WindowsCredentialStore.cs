@@ -11,7 +11,10 @@ namespace ProactiveAI.Infrastructure.Security;
 /// </summary>
 public sealed class WindowsCredentialStore : ICredentialStore
 {
-    public const string DefaultTarget = "ProactiveAI/OpenAI-API-Key";
+    public const string DefaultTarget = "MeetingCopilot/OpenAI-API-Key";
+
+    /// <summary>Entry used while the app was called "Proactive AI"; moved to <see cref="DefaultTarget"/> by <see cref="MoveFrom"/>.</summary>
+    public const string LegacyTarget = "ProactiveAI/OpenAI-API-Key";
     private const int CredTypeGeneric = 1;
     private const int CredPersistLocalMachine = 2;
     private const int ErrorNotFound = 1168;
@@ -77,7 +80,7 @@ public sealed class WindowsCredentialStore : ICredentialStore
                 CredentialBlob = blobPtr,
                 Persist = CredPersistLocalMachine,
                 UserName = "openai-api-key",
-                Comment = "Proactive AI OpenAI API key",
+                Comment = "Meeting Copilot OpenAI API key",
             };
             if (!CredWrite(ref cred, 0))
             {
@@ -101,6 +104,37 @@ public sealed class WindowsCredentialStore : ICredentialStore
                 throw new Win32Exception(err, "Credential Manager delete failed.");
             }
         }
+    }
+
+    /// <summary>
+    /// Moves a key stored under <paramref name="legacyTarget"/> to this store's entry. When this store already has a key,
+    /// that key is kept and the legacy entry (a stale copy) is removed, so a key deleted later cannot come back from it.
+    /// Returns true when a key was moved.
+    /// </summary>
+    public bool MoveFrom(string legacyTarget)
+    {
+        var legacy = new WindowsCredentialStore(legacyTarget);
+        if (!legacy.HasApiKey())
+        {
+            return false;
+        }
+        if (HasApiKey())
+        {
+            legacy.DeleteApiKey();
+            return false;
+        }
+        var key = legacy.ReadApiKey();
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return false;
+        }
+        WriteApiKey(key);
+        if (!string.Equals(ReadApiKey(), key, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("The moved API key could not be read back; the old entry was kept.");
+        }
+        legacy.DeleteApiKey();
+        return true;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

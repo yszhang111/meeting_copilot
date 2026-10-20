@@ -20,7 +20,7 @@ public sealed partial class BoundedFileLoggerProvider : ILoggerProvider
     public BoundedFileLoggerProvider(string directory, LogLevel minimum = LogLevel.Information)
     {
         Directory.CreateDirectory(directory);
-        _path = Path.Combine(directory, "proactive-ai.log");
+        _path = Path.Combine(directory, "meeting-copilot.log");
         _minimum = minimum;
     }
 

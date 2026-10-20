@@ -7,8 +7,8 @@
     <WarningsAsErrors>$(WarningsAsErrors);nullable</WarningsAsErrors>
     <Deterministic>true</Deterministic>
     <InvariantGlobalization>false</InvariantGlobalization>
-    <Company>ProactiveAI</Company>
-    <Product>Proactive AI</Product>
+    <Company>Meeting Copilot</Company>
+    <Product>Meeting Copilot</Product>
     <Version>0.1.0</Version>
   </PropertyGroup>
 </Project>

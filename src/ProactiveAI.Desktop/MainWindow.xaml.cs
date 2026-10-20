@@ -44,6 +44,18 @@ public sealed partial class MainWindow : Window
         _nav.Navigated += OnNavigated;
         _lastState = LiveView.ViewModel.State;
         LiveView.ViewModel.PropertyChanged += OnLivePropertyChanged;
+        RootGrid.Loaded += OnFirstLoaded;
+    }
+
+    /// <summary>On start without an API key, ask for one (once per app run; "Later" leaves the hints on the New session page).</summary>
+    private async void OnFirstLoaded(object sender, RoutedEventArgs e)
+    {
+        RootGrid.Loaded -= OnFirstLoaded;
+        if (App.Current!.GetService<ProactiveAI.Core.Abstractions.ICredentialStore>().HasApiKey())
+        {
+            return;
+        }
+        await Views.ApiKeyPrompt.ShowAsync(RootGrid.XamlRoot);
     }
 
     private readonly AppNavigator _nav;

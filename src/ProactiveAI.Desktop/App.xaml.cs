@@ -209,14 +209,14 @@ public partial class App : Application
             SessionState.Starting or SessionState.Stopping => 0xFF2563EB,
             _ => 0xFF6B7280,
         };
-        _tray?.Update($"Proactive AI — {state}{detail}", color);
+        _tray?.Update($"Meeting Copilot — {state}{detail}", color);
         _main?.SetTitleState(state == "Stopped" ? string.Empty : $"· {state}{detail}");
     }
 
     private IReadOnlyList<TrayMenuItem> BuildTrayMenu()
     {
         var state = GetService<SessionCoordinator>().State;
-        var items = new List<TrayMenuItem> { new(MenuOpen, "Open Proactive AI"), new(-1, string.Empty) };
+        var items = new List<TrayMenuItem> { new(MenuOpen, "Open Meeting Copilot"), new(-1, string.Empty) };
         switch (state)
         {
             case SessionState.Listening or SessionState.Reconnecting:

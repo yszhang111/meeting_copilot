@@ -120,7 +120,7 @@ public class InfrastructureTests
     [Fact]
     public void CredentialStoreRoundTripsWithoutTouchingTheProductionEntry()
     {
-        var store = new WindowsCredentialStore("ProactiveAI/Test-" + Guid.NewGuid().ToString("N"));
+        var store = new WindowsCredentialStore("MeetingCopilot/Test-" + Guid.NewGuid().ToString("N"));
         try
         {
             Assert.False(store.HasApiKey());
